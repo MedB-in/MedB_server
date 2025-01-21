@@ -22,7 +22,7 @@ npm install
 # Create an environment file
 cp .env.example .env
 
-# Update the .env file with your configuration
+# Update the .env file with the configuration
 
 # Start the development server
 npm run dev
