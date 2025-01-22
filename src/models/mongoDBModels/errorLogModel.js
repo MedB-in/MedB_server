@@ -1,14 +1,27 @@
 const mongoose = require('mongoose');
 
-const logSchema = new mongoose.Schema({
-  message: { type: String, required: true },
-  level: { type: String, required: true },
-  timestamp: { type: Date, default: Date.now },
-  clientIp: { type: String, required: true },
-  url: { type: String, required: true },
-  stack: String,
-});
+const errorLogSchema = new mongoose.Schema(
+  {
+    message: String,
+    level: String,
+    stack: String,
+    clientIp: String,
+    url: String,
+    timestamp: {
+      type: Date,
+      default: Date.now,
+    },
+  },
+  {
+    timestamps: true,
+  }
+);
 
-const ErrorLog = mongoose.model('ErrorLog', logSchema);
+const expirationDays = process.env.ERROR_LOG_EXPIRATION_DAYS || 7; // Default to 7 days
+const expirationSeconds = expirationDays * 24 * 60 * 60;
 
-module.exports = ErrorLog;
+errorLogSchema.index({ timestamp: 1 }, { expireAfterSeconds: expirationSeconds });
+
+const Log = mongoose.model('ErrorLog', errorLogSchema);
+
+module.exports = Log;

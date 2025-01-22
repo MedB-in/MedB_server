@@ -7,6 +7,8 @@ module.exports = cleanEnv(process.env, {
   PORT: port(),
   ACCESS_TOKEN_SECRET: str(),
   ACCESS_TOKEN_LIFE: str(),
+  REFRESH_TOKEN_SECRET: str(),
+  REFRESH_TOKEN_LIFE: str(),
   COOKIE_SECRET: str(),
   NODE_ENV: str(),
   DEV_URL: str(),

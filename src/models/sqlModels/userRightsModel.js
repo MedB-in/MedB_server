@@ -1,29 +1,34 @@
 const { DataTypes } = require('sequelize');
 const { sequelize } = require('../../config/postgresConnection');
-const User = require('../sqlModels/userModel');
+const Users = require('../sqlModels/userModel');
+const Menu = require('../sqlModels/menuModel');
 
 const UserRights = sequelize.define('UserRights', {
     userRightsId: {
-        type: DataTypes.UUID,
+        type: DataTypes.BIGINT,
         primaryKey: true,
         allowNull: false,
-        defaultValue: DataTypes.UUIDV4,
+        autoIncrement: true,
     },
     userId: {
-        type: DataTypes.UUID,
+        type: DataTypes.BIGINT,
         allowNull: false,
         references: {
-            model: User,
-            key: 'userId', // Reference to userId in User model
+            model: Users,
+            key: 'userId',
         },
     },
     companyId: {
-        type: DataTypes.UUID,
-        allowNull: false,
+        type: DataTypes.STRING, //make changes if required
+        allowNull: true,
     },
     menuId: {
-        type: DataTypes.UUID,
+        type: DataTypes.BIGINT,
         allowNull: false,
+        references: {
+            model: Menu,
+            key: 'menuId',
+        },
     },
     viewAllowed: {
         type: DataTypes.BOOLEAN,
@@ -51,16 +56,29 @@ const UserRights = sequelize.define('UserRights', {
         allowNull: true,
     },
     createdBy: {
-        type: DataTypes.UUID,
+        type: DataTypes.BIGINT,
         allowNull: true,
+        references: {
+            model: Users,
+            key: 'userId',
+        },
     },
     modifiedBy: {
-        type: DataTypes.UUID,
+        type: DataTypes.BIGINT,
         allowNull: true,
+        references: {
+            model: Users,
+            key: 'userId',
+        },
     },
 }, {
     timestamps: false,
     tableName: 'UserRights',
 });
+
+UserRights.belongsTo(Users, { foreignKey: 'userId', as: 'user' });
+UserRights.belongsTo(Users, { foreignKey: 'createdBy', as: 'creator' });
+UserRights.belongsTo(Users, { foreignKey: 'modifiedBy', as: 'modifier' });
+UserRights.belongsTo(Menu, { foreignKey: 'menuId', as: 'menu' });
 
 module.exports = UserRights;

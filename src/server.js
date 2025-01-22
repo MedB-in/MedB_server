@@ -10,27 +10,22 @@ const connectMongoDB = require('./config/mongoConnection');
 const { connectPostgreSQL } = require('./config/postgresConnection');
 
 const AppError = require('./util/appError');
+const authMiddleware = require('./middleware/authMiddleware');
 const globalErrorHandler = require('./middleware/errorHandler');
 const rateLimiter = require('./util/rateLimiter');
 const env = require('./util/validateEnv');
 const errorLogger = require('./middleware/errorLogger');
 
-// Import the routes module
+// Routes module
 const auth = require('./routes/authentication');
-const testOnly = require('./routes/test');
+const testOnly = require('./routes/testRoutes');
 
 const app = express();
 
-// Security middleware to set HTTP headers and prevent vulnerabilities   
 app.use(helmet());
-
-// Trust X-Forwarded-For header to get correct client IP and protocol
 app.set('trust proxy', parseInt(env.NUMBER_OF_PROXIES) || 1);
-
-// Rate limiting to protect from abuse and reduce server load
 app.use(rateLimiter);
 
-// Enable CORS with dynamic origin based on the environment (dev, test, or production)
 app.use(
     cors({
         origin:
@@ -43,17 +38,9 @@ app.use(
     })
 );
 
-
-// Parse incoming JSON requests with a maximum body size of 5MB
 app.use(express.json({ limit: '5mb' }));
-
-// Parse URL-encoded requests with a 5MB body size limit and a max of 1000 parameters
 app.use(express.urlencoded({ limit: '5mb', extended: false, parameterLimit: 1000 }));
-
-// Parse cookies in requests
 app.use(cookieParser());
-
-// Log HTTP requests in 'dev' format for development
 app.use(morgan('dev'));
 
 // Health check
@@ -64,13 +51,17 @@ app.get('/', (_req, res) => {
 
 // API Endpoints
 app.use('/test', testOnly)
-app.use('/api/user/auth', auth);
+// app.use('/api/user/auth', auth);
+// app.use(authMiddleware)
+// app.use('/api/user/', userController);
+// app.use('/api/patient/', patientController);
+// app.use('/api/product/', productController);
 
 // Error Handler
 app.use(() => {
     throw new AppError({ statusCode: 404, message: 'Route not found!' });
 });
-// app.use(errorLogger)
+app.use(errorLogger)  //Enable or Disable error logging********    
 app.use(globalErrorHandler);
 
 // Start the server
