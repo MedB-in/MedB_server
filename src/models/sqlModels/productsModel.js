@@ -4,7 +4,7 @@ const Users = require('../sqlModels/userModel');
 
 const Products = sequelize.define('Products', {
     productId: {
-        type: DataTypes.BIGINT,
+        type: DataTypes.INTEGER,
         primaryKey: true,
         allowNull: false,
         autoIncrement: true,

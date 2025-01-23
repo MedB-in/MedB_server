@@ -1,7 +1,7 @@
 const { DataTypes } = require('sequelize');
-const { sequelize } = require('../../config/postgresConnection'); // Adjust if necessary
-const Users = require('../sqlModels/userModel'); // Assuming you have a User model
-const Module = require('../sqlModels/moduleModel'); // Assuming you have a Module model
+const { sequelize } = require('../../config/postgresConnection');
+const Users = require('../sqlModels/userModel');
+const Module = require('../sqlModels/moduleModel');
 
 const Menu = sequelize.define('Menu', {
     menuId: {
@@ -14,8 +14,8 @@ const Menu = sequelize.define('Menu', {
         type: DataTypes.INTEGER,
         allowNull: false,
         references: {
-            model: Module, 
-            key: 'moduleId', 
+            model: Module,
+            key: 'moduleId',
         },
     },
     menuName: {
@@ -48,7 +48,7 @@ const Menu = sequelize.define('Menu', {
         defaultValue: DataTypes.NOW,
     },
     createdBy: {
-        type: DataTypes.INTEGER,
+        type: DataTypes.BIGINT,
         allowNull: false,
         references: {
             model: Users,
@@ -60,7 +60,7 @@ const Menu = sequelize.define('Menu', {
         allowNull: true,
     },
     modifiedBy: {
-        type: DataTypes.INTEGER,
+        type: DataTypes.BIGINT,
         allowNull: true,
         references: {
             model: Users,
@@ -72,10 +72,8 @@ const Menu = sequelize.define('Menu', {
     tableName: 'Menu',
 });
 
-// Define associations
 Menu.belongsTo(Module, { foreignKey: 'moduleId', as: 'module' });
 Menu.belongsTo(Users, { foreignKey: 'createdBy', as: 'createdByUser' });
 Menu.belongsTo(Users, { foreignKey: 'modifiedBy', as: 'modifiedByUser' });
 
-// Export the model
 module.exports = Menu;

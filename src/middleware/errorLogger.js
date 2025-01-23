@@ -9,7 +9,7 @@ const errorLogger = (err, req, res, next) => {
         url: requestUrl,
         method: req.method,
         body: req.body,
-        statusCode: err.statusCode || 500, 
+        statusCode: err.statusCode || 500,
         clientIp: clientIp === '::1' ? '127.0.0.1' : clientIp,
     });
 

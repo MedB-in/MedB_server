@@ -6,6 +6,10 @@ const jwt = require("jsonwebtoken");
 const User = require("../models/sqlModels/userModel");
 const UserRights = require('../models/sqlModels/userRightsModel');
 const Products = require("../models/sqlModels/productsModel");
+const ProductMenu = require("../models/sqlModels/productMenuModel");
+const Module = require("../models/sqlModels/moduleModel");
+const Menu = require("../models/sqlModels/menuModel");
+const Subscription = require("../models/sqlModels/subscriptionModel");
 
 //Function to register a new user
 exports.register = catchAsync(async (req, res, next) => {
@@ -199,7 +203,6 @@ exports.editUserRights = catchAsync(async (req, res, next) => {
 });
 
 
-
 // Function to add a product
 exports.addProduct = catchAsync(async (req, res, next) => {
     const userId = req.body.userId; //change to req.user.userId
@@ -264,6 +267,7 @@ exports.addProduct = catchAsync(async (req, res, next) => {
     });
 });
 
+
 // Function to edit an existing product
 exports.editProduct = catchAsync(async (req, res, next) => {
     const userId = req.body.userId; //change to req.user.userId
@@ -324,5 +328,283 @@ exports.editProduct = catchAsync(async (req, res, next) => {
             isFree: updatedProduct.isFree,
             isTrial: updatedProduct.isTrial,
         },
+    });
+});
+
+
+//Function to add menu for product
+exports.addProductMenu = catchAsync(async (req, res, next) => {
+    const { productId, menuId } = req.body;
+    const createdBy = req.body.userId; // Change to req.user.userId
+
+    if (!productId || !menuId || !createdBy) {
+        throw new AppError({ statusCode: 400, message: 'Missing required fields for product menu creation' });
+    }
+
+    // Check if the product exists
+    const productExists = await Products.findByPk(productId);
+    if (!productExists) {
+        throw new AppError({ statusCode: 404, message: 'Product not found' });
+    }
+
+    // Check if the menu exists
+    const menuExists = await Menu.findByPk(menuId);
+    if (!menuExists) {
+        throw new AppError({ statusCode: 404, message: 'Menu not found' });
+    }
+
+    const productMenu = await ProductMenu.create({
+        productId,
+        menuId,
+        createdOn: new Date(),
+        createdBy,
+        modifiedOn: null,
+        modifiedBy: null,
+    });
+
+    return res.status(201).json({
+        status: 'success',
+        message: 'Menu added to product successfully',
+        data: productMenu,
+    });
+});
+
+
+//Function to Edit menu for product
+exports.editProductMenu = catchAsync(async (req, res, next) => {
+    const { productMenuId, productId, menuId } = req.body;
+    const modifiedBy = req.body.userId; // Change to req.user.userId
+
+
+    if (!productMenuId || !productId || !menuId || !modifiedBy) {
+        throw new AppError({ statusCode: 400, message: 'Missing required fields for product menu update' });
+    }
+
+    // Check if the product exists
+    const productExists = await Products.findByPk(productId);
+    if (!productExists) {
+        throw new AppError({ statusCode: 404, message: 'Product not found' });
+    }
+
+    // Check if the menu exists
+    const menuExists = await Menu.findByPk(menuId);
+    if (!menuExists) {
+        throw new AppError({ statusCode: 404, message: 'Menu not found' });
+    }
+
+    // Check if the product menu exists
+    const productMenuExists = await ProductMenu.findByPk(productMenuId);
+    if (!productMenuExists) {
+        throw new AppError({ statusCode: 404, message: 'Product menu association not found' });
+    }
+
+    const updatedProductMenu = await productMenuExists.update({
+        productId,
+        menuId,
+        modifiedOn: new Date(),
+        modifiedBy,
+    });
+
+    return res.status(200).json({
+        status: 'success',
+        message: 'Product menu updated successfully',
+        data: updatedProductMenu,
+    });
+});
+
+
+// Function to add a module
+exports.addModule = catchAsync(async (req, res, next) => {
+    const { moduleName, sortOrder, moduleIcon } = req.body;
+    const createdBy = req.body.userId; // Change to req.user.userId
+
+    if (!moduleName || sortOrder === undefined || !createdBy) {
+        throw new AppError({ statusCode: 400, message: 'Missing required fields for module' });
+    }
+
+    // Check if a module with the same name already exists
+    const existingModule = await Module.findOne({
+        where: { moduleName },
+    });
+
+    if (existingModule) {
+        throw new AppError({ statusCode: 400, message: 'Module with this name already exists' });
+    }
+
+    const module = await Module.create({
+        moduleName,
+        sortOrder,
+        moduleIcon,
+        createdBy,
+        createdOn: new Date(),
+    });
+
+    return res.status(201).json({
+        status: 'success',
+        message: 'Module added successfully',
+        data: module,
+    });
+});
+
+
+// Function to edit a module
+exports.editModule = catchAsync(async (req, res, next) => {
+    const { moduleName, sortOrder, moduleIcon, moduleId } = req.body;
+    const modifiedBy = req.body.userId; // Change to req.user.userId 
+
+    if (!moduleId || modifiedBy === undefined) {
+        throw new AppError({ statusCode: 400, message: 'Missing required fields for module update' });
+    }
+
+    // Check if the module exists
+    const existingModule = await Module.findOne({
+        where: { moduleId },
+    });
+
+    if (!existingModule) {
+        throw new AppError({ statusCode: 404, message: 'Module not found' });
+    }
+
+    await Module.update(
+        {
+            moduleName,
+            sortOrder,
+            moduleIcon,
+            modifiedBy,
+            modifiedOn: new Date(),
+        },
+        { where: { moduleId } }
+    );
+
+    return res.status(200).json({
+        status: 'success',
+        message: 'Module updated successfully',
+    });
+});
+
+//Function to add menu
+exports.addMenu = catchAsync(async (req, res, next) => {
+    const { moduleId, menuName, actionName, controllerName, isActive, sortOrder, menuIcon } = req.body;
+    const createdBy = req.body.userId; // change to req.user.userId
+
+    if (!moduleId || !menuName || isActive === undefined || !sortOrder) {
+        throw new AppError({ statusCode: 400, message: 'Missing required fields for menu creation' });
+    }
+
+    // Check if the specified module exists
+    const moduleExists = await Module.findByPk(moduleId);
+    if (!moduleExists) {
+        throw new AppError({ statusCode: 404, message: 'Module not found' });
+    }
+
+    const menu = await Menu.create({
+        moduleId,
+        menuName,
+        actionName,
+        controllerName,
+        isActive,
+        sortOrder,
+        menuIcon,
+        createdBy,
+        createdOn: new Date(),
+    });
+
+    return res.status(201).json({
+        status: 'success',
+        message: 'Menu added successfully',
+        data: menu,
+    });
+});
+
+// Function to edit menu
+exports.editMenu = catchAsync(async (req, res, next) => {
+    const { menuId, moduleId, menuName, actionName, controllerName, isActive, sortOrder, menuIcon } = req.body;
+    const modifiedBy = req.body.userId; // change to req.user.userId
+
+    if (!menuId || !moduleId || !menuName || isActive === undefined || !sortOrder) {
+        throw new AppError({ statusCode: 400, message: 'Missing required fields for menu update' });
+    }
+
+    // Check if the specified menu exists
+    const menuExists = await Menu.findByPk(menuId);
+    if (!menuExists) {
+        throw new AppError({ statusCode: 404, message: 'Menu not found' });
+    }
+
+    const moduleExists = await Module.findByPk(moduleId);
+    if (!moduleExists) {
+        throw new AppError({ statusCode: 404, message: 'Module not found' });
+    }
+
+    await Menu.update(
+        {
+            moduleId,
+            menuName,
+            actionName,
+            controllerName,
+            isActive,
+            sortOrder,
+            menuIcon,
+            modifiedBy,
+            modifiedOn: new Date(),
+        },
+        {
+            where: { menuId },
+        }
+    );
+
+    return res.status(200).json({
+        status: 'success',
+        message: 'Menu updated successfully',
+    });
+});
+
+
+// Function to add subscription
+exports.addSubscription = catchAsync(async (req, res, next) => {
+    const { userId, productId, startOn, endOn, isPaid, days, period, netAmount, orderId } = req.body;
+
+    const createdBy = req.body.userId; // change to req.user.userId
+
+    if (!userId || !productId || !startOn || !endOn || isPaid === undefined || !createdBy) {
+        throw new AppError({ statusCode: 400, message: 'Missing required fields for subscription creation' });
+    }
+
+    // Check if the user exists
+    const userExists = await User.findByPk(userId);
+    if (!userExists) {
+        throw new AppError({ statusCode: 404, message: 'User not found' });
+    }
+
+    // Check if the product exists
+    const productExists = await Products.findByPk(productId);
+    if (!productExists) {
+        throw new AppError({ statusCode: 404, message: 'Product not found' });
+    }
+
+    // Dummy subscription creation for now
+    // the subscription's time and date would depend on the actual payment process
+    // the 'days', 'netAmount', 'period', and other data would depend on the product chosen by the user
+
+    const subscription = await Subscription.create({
+        userId,
+        productId,
+        startOn,
+        endOn,
+        isPaid,
+        days,
+        period,
+        netAmount,
+        createdOn: new Date(),
+        createdBy,
+        modifiedOn: null,
+        modifiedBy: null,
+        orderId,
+    });
+
+    return res.status(201).json({
+        status: 'success',
+        message: 'Subscription added successfully',
+        data: subscription, //change response
     });
 });

@@ -1,6 +1,6 @@
 const { DataTypes } = require('sequelize');
-const { sequelize } = require('../../config/postgresConnection'); 
-const Users = require('../sqlModels/userModel'); 
+const { sequelize } = require('../../config/postgresConnection');
+const Users = require('../sqlModels/userModel');
 
 const Module = sequelize.define('Module', {
     moduleId: {
@@ -27,11 +27,11 @@ const Module = sequelize.define('Module', {
         defaultValue: DataTypes.NOW,
     },
     createdBy: {
-        type: DataTypes.INTEGER,
+        type: DataTypes.BIGINT,
         allowNull: false,
         references: {
-            model: Users, 
-            key: 'userId', 
+            model: Users,
+            key: 'userId',
         },
     },
     modifiedOn: {
@@ -39,21 +39,19 @@ const Module = sequelize.define('Module', {
         allowNull: true,
     },
     modifiedBy: {
-        type: DataTypes.INTEGER,
+        type: DataTypes.BIGINT,
         allowNull: true,
         references: {
-            model: Users, 
-            key: 'userId', 
+            model: Users,
+            key: 'userId',
         },
     },
 }, {
     timestamps: false,
-    tableName: 'Module', 
+    tableName: 'Module',
 });
 
-// Define associations
 Module.belongsTo(Users, { foreignKey: 'createdBy', as: 'createdByUser' });
 Module.belongsTo(Users, { foreignKey: 'modifiedBy', as: 'modifiedByUser' });
 
-// Export the model
 module.exports = Module;
