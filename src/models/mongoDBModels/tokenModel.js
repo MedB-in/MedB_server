@@ -6,7 +6,6 @@ const tokenSchema = new Schema({
         type: Number,
         required: true
     },
-    fcmToken: { type: String },
     refreshToken: {
         type: String
     },
