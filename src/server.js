@@ -51,7 +51,7 @@ app.get('/', (_req, res) => {
 
 // API Endpoints
 app.use('/test', testOnly)
-// app.use('/api/user/auth', auth);
+app.use('/api/auth', auth);
 // app.use(authMiddleware)
 // app.use('/api/user/', userController);
 // app.use('/api/patient/', patientController);
