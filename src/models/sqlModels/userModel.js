@@ -93,8 +93,12 @@ const User = sequelize.define('User', {
     },
 
     createdBy: {
-        type: DataTypes.INTEGER, //edit with ref to user
+        type: DataTypes.BIGINT,
         allowNull: false,
+        references: {
+            model: 'Users',
+            key: 'userId',
+        },
     },
 
     modifiedOn: {
@@ -103,13 +107,19 @@ const User = sequelize.define('User', {
     },
 
     modifiedBy: {
-        type: DataTypes.INTEGER, //edit with ref to user
+        type: DataTypes.BIGINT,
         allowNull: true,
+        references: {
+            model: 'Users',
+            key: 'userId',
+        },
     },
 
     loginKey: {
-        type: DataTypes.STRING,
-        allowNull: true,
+        type: DataTypes.UUID,  // UUID type instead of STRING
+        defaultValue: DataTypes.UUIDV4,
+        allowNull: false,
+        unique: true,
     },
 
     salt: {
@@ -125,5 +135,8 @@ const User = sequelize.define('User', {
     timestamps: false,
     tableName: 'Users',
 });
+
+User.hasMany(User, { foreignKey: 'createdBy', as: 'createdByUser' });
+User.hasMany(User, { foreignKey: 'modifiedBy', as: 'modifiedByUser' });
 
 module.exports = User;

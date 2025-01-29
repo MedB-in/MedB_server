@@ -4,6 +4,7 @@ const AppError = require("../util/appError");
 const User = require("../models/sqlModels/userModel");
 const Token = require("../models/mongoDBModels/tokenModel");
 const env = require("../util/validateEnv");
+const { sequelize } = require('../config/postgresConnection');
 
 // Generate JWT function
 const generateJWT = (payload, secret, expirationTime) => {
@@ -18,22 +19,31 @@ exports.loginUser = async (email, password) => {
 
     const user = await User.findOne({ where: { email } });
     if (!user) {
-        throw new AppError({ statusCode: 401, message: "Invalid credentials" });
+        throw new AppError({ statusCode: 401, message: "Invalid User" });
     }
-
+    const userId = user.userId;
     const isValidPassword = await bcrypt.compare(password, user.password);
     if (!isValidPassword) {
-        throw new AppError({ statusCode: 401, message: "Invalid credentials" });
+        throw new AppError({ statusCode: 401, message: "Invalid Password" });
     }
 
+
+    //Calling stored procedure
+    const query = `SELECT get_user_menu(:userId);`;
+
+    const [menuData] = await sequelize.query(query, {
+        replacements: { userId },
+        type: sequelize.QueryTypes.SELECT,
+    });
+
     const accessToken = generateJWT(
-        { userId: user.userId, role: user.designation },
+        { userId: user.userId },
         env.ACCESS_TOKEN_SECRET,
         env.ACCESS_TOKEN_LIFE
     );
 
     const refreshToken = generateJWT(
-        { userId: user.userId, role: user.designation },
+        { userId: user.userId },
         env.REFRESH_TOKEN_SECRET,
         env.REFRESH_TOKEN_LIFE
     );
@@ -45,7 +55,14 @@ exports.loginUser = async (email, password) => {
         { upsert: true, new: true }
     );
 
-    return { accessToken, refreshToken, userId: user.userId };
+    const userDetails = {
+        userId: user.userId,
+        name: user.name,
+        email: user.email,
+        loginKey: user.loginKey,
+    }
+
+    return { accessToken, refreshToken, userDetails, menuData };
 };
 
 // Service for refreshing the access token
@@ -76,4 +93,16 @@ exports.refreshAccessToken = async (refreshToken) => {
     );
 
     return { accessToken };
+};
+
+// Service for logging out
+exports.logout = async (refreshToken) => {
+    if (!refreshToken) {
+        throw new AppError({ statusCode: 401, message: 'Refresh token not provided' });
+    }
+
+    const findTokenAndDelete = await Token.findOneAndDelete({ refreshToken });
+    if (!findTokenAndDelete) {
+        throw new AppError({ statusCode: 401, message: 'Invalid refresh token' });
+    }
 };

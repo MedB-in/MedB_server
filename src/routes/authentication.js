@@ -3,7 +3,17 @@ const authController = require('../controller/authController');
 
 const router = Router();
 
-router.post('/login', authController.login);
-// router.post('/logout', authController.logout);
+router
+    .route('/login')
+    .post(authController.login);
 
+router
+    .route('/logout')
+    .post(authController.logout);
+
+router
+    .route('/refreshAccessToken')
+    .post(authController.refreshAccessToken);
+
+    
 module.exports = router;

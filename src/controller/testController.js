@@ -126,7 +126,7 @@ exports.addUserRights = catchAsync(async (req, res, next) => {
     const existingUserRights = await UserRights.findOne({
         where: {
             userId,
-            companyId,
+            menuId,
         }
     });
 

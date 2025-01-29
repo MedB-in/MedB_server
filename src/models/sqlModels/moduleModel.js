@@ -18,7 +18,7 @@ const Module = sequelize.define('Module', {
         allowNull: false,
     },
     moduleIcon: {
-        type: DataTypes.STRING(150),
+        type: DataTypes.STRING, //changed
         allowNull: true,
     },
     createdOn: {
