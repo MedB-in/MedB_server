@@ -19,6 +19,7 @@ const errorLogger = require('./middleware/errorLogger');
 // Routes module
 const auth = require('./routes/authentication');
 const testOnly = require('./routes/testRoutes');
+const controlPanelRoutes = require('./routes/controlPanelRoutes');    
 
 const app = express();
 
@@ -52,7 +53,8 @@ app.get('/', (_req, res) => {
 // API Endpoints
 app.use('/test', testOnly)
 app.use('/api/auth', auth);
-// app.use(authMiddleware)
+app.use(authMiddleware)
+app.use('/api/controlPanel', controlPanelRoutes);
 // app.use('/api/user/', userController);
 // app.use('/api/patient/', patientController);
 // app.use('/api/product/', productController);

@@ -32,6 +32,8 @@ BEGIN
                         me."menuName",
                         me."sortOrder",
                         me."menuIcon",
+                        me."actionName",
+                        me."controllerName",
                         COALESCE((
                             SELECT jsonb_build_object(
                                 'viewAllowed', ur."viewAllowed",

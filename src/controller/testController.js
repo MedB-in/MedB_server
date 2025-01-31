@@ -519,45 +519,39 @@ exports.addMenu = catchAsync(async (req, res, next) => {
 // Function to edit menu
 exports.editMenu = catchAsync(async (req, res, next) => {
     const { menuId, moduleId, menuName, actionName, controllerName, isActive, sortOrder, menuIcon } = req.body;
-    const modifiedBy = req.body.userId; // change to req.user.userId
+    const modifiedBy = req.body.userId; // Change to use authenticated user ID
 
-    if (!menuId || !moduleId || !menuName || isActive === undefined || !sortOrder) {
-        throw new AppError({ statusCode: 400, message: 'Missing required fields for menu update' });
+    if (!menuId) {
+        throw new AppError({ statusCode: 400, message: "menuId is required" });
     }
 
     // Check if the specified menu exists
     const menuExists = await Menu.findByPk(menuId);
     if (!menuExists) {
-        throw new AppError({ statusCode: 404, message: 'Menu not found' });
+        throw new AppError({ statusCode: 404, message: "Menu not found" });
     }
 
-    const moduleExists = await Module.findByPk(moduleId);
-    if (!moduleExists) {
-        throw new AppError({ statusCode: 404, message: 'Module not found' });
-    }
+    // Get the current menu data
+    const updatedData = {
+        moduleId: moduleId ?? menuExists.moduleId,
+        menuName: menuName ?? menuExists.menuName,
+        actionName: actionName ?? menuExists.actionName,
+        controllerName: controllerName ?? menuExists.controllerName,
+        isActive: isActive !== undefined ? isActive : menuExists.isActive, 
+        sortOrder: sortOrder ?? menuExists.sortOrder,
+        menuIcon: menuIcon ?? menuExists.menuIcon,
+        modifiedBy,
+        modifiedOn: new Date(),
+    };
 
-    await Menu.update(
-        {
-            moduleId,
-            menuName,
-            actionName,
-            controllerName,
-            isActive,
-            sortOrder,
-            menuIcon,
-            modifiedBy,
-            modifiedOn: new Date(),
-        },
-        {
-            where: { menuId },
-        }
-    );
+    await Menu.update(updatedData, { where: { menuId } });
 
     return res.status(200).json({
-        status: 'success',
-        message: 'Menu updated successfully',
+        status: "success",
+        message: "Menu updated successfully",
     });
 });
+
 
 
 // Function to add subscription
