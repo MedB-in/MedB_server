@@ -1,0 +1,35 @@
+CREATE OR REPLACE FUNCTION get_all_menus_with_modules()
+RETURNS JSON AS $$
+DECLARE 
+    result JSON;
+BEGIN
+    -- Fetch all modules along with their menus
+    SELECT json_agg(modules_with_menus) INTO result
+    FROM (
+        SELECT 
+            m."moduleId",
+            m."moduleName",
+            m."sortOrder",
+            m."moduleIcon",
+            (
+                SELECT json_agg(menus)
+                FROM (
+                    SELECT 
+                        me."menuId",
+                        me."menuName",
+                        me."sortOrder",
+                        me."menuIcon",
+                        me."actionName",
+                        me."controllerName"
+                    FROM "Menu" me
+                    WHERE me."moduleId" = m."moduleId"
+                    ORDER BY me."sortOrder"
+                ) AS menus
+            ) AS menus
+        FROM "Module" m
+        ORDER BY m."sortOrder"
+    ) AS modules_with_menus;
+
+    RETURN result;
+END;
+$$ LANGUAGE plpgsql;

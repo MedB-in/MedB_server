@@ -1,16 +1,23 @@
 const { Router } = require('express');
-const controlPanelController = require('../controller/authController');
+const controlPanelController = require('../controller/controlPanelController');
 
 const router = Router();
 
 router
     .route('/menu')
-    // .get(controlPanelController.getMenu)
-    // .post(controlPanelController.addMenu);
+    .get(controlPanelController.getAllMenus)
+    .post(controlPanelController.addMenu)
+
+router
+    .route('/menu/:id')
+    .put(controlPanelController.editMenu)
 
 router
     .route('/module')
-    // .get(controlPanelController.getModule)
-    // .post(controlPanelController.addModule);
+    .post(controlPanelController.addModule);
+
+router
+    .route('/module/:id')
+    .put(controlPanelController.editModule)
 
 module.exports = router;

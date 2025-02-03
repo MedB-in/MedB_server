@@ -1,8 +1,30 @@
+const { sequelize } = require('../config/postgresConnection');
 const Menu = require('../models/sqlModels/menuModel');
 const Module = require('../models/sqlModels/moduleModel');
 const ProductMenu = require('../models/sqlModels/productMenuModel');
 const Products = require('../models/sqlModels/productsModel');
-const AppError = require('../utils/appError');
+const AppError = require('../util/appError');
+
+
+//Service to get all products
+exports.getAllProducts = async () => {
+    try {
+        const query = `SELECT get_all_products_with_menus_and_modules();`;
+
+        const [productData] = await sequelize.query(query, {
+            type: sequelize.QueryTypes.SELECT,
+        });
+
+        if (!productData) {
+            throw new AppError({ statusCode: 404, message: "No product found" });
+        }
+
+        return productData.get_all_products_with_menus_and_modules;
+    } catch (error) {
+        throw new AppError({ statusCode: 500, message: "Error fetching product data", error });
+    }
+};
+
 
 // Service to add a product
 exports.addProduct = async (data) => {
@@ -104,6 +126,16 @@ exports.editProduct = async (data) => {
     });
 
     return updatedProduct;
+};
+
+//Service to get menu list
+exports.getMenuList = async () => {
+    try {
+        const menuList = await Menu.findAll();
+        return menuList;
+    } catch (error) {
+        throw new AppError({ statusCode: 500, message: "Error fetching menu list", error });
+    }
 };
 
 // Service to add a product menu

@@ -12,7 +12,7 @@ router
     .post(authController.logout);
 
 router
-    .route('/refreshAccessToken')
+    .route('/refreshToken')
     .post(authController.refreshAccessToken);
 
     

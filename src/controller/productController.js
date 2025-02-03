@@ -1,5 +1,12 @@
-const catchAsync = require('../utils/catchAsync');
-const productService = require('../services/productService');
+const catchAsync = require('../util/catchAsync');
+const productService = require('../services/productServices');
+
+
+// Controller to get products
+exports.getAllProducts = catchAsync(async (req, res, next) => {
+    const products = await productService.getAllProducts();
+    return res.status(200).json({ products });
+});
 
 // Controller to add a product
 exports.addProduct = catchAsync(async (req, res, next) => {
@@ -28,6 +35,15 @@ exports.editProduct = catchAsync(async (req, res, next) => {
         data: updatedProduct,
     });
 });
+
+
+//Controller to get menu
+exports.getProductMenu = catchAsync(async (req, res, next) => {
+    const productMenu = await productService.getMenuList();
+    
+    return res.status(200).json({ productMenu });
+});
+
 
 // Controller to add a menu for a product
 exports.addProductMenu = catchAsync(async (req, res, next) => {

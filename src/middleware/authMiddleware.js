@@ -1,29 +1,33 @@
 const jwt = require('jsonwebtoken');
-const userModel = require('../models/sqlModels/userModel');
+const User = require('../models/sqlModels/userModel');
 const catchAsync = require('../util/catchAsync');
 const AppError = require('../util/appError');
 const env = require('../util/validateEnv');
 
 const authMiddleware = catchAsync(async (req, res, next) => {
 
-    if (!req.headers.authorization) {
-        throw new AppError({ name: 'Unauthorized', statusCode: 401, message: 'Invalid access token' });
+    if (!req.headers) {
+        throw new AppError({ name: 'Unauthorized', statusCode: 401, message: 'Invalid access token 123456' });
     }
 
     // get refresh token
-    const refreshToken = req.cookies.refreshToken;
+    const refreshToken = req.headers.cookie.split("=")[1];
+
     if (!refreshToken) {
         throw new AppError({ name: 'Unauthorized', statusCode: 401, message: 'Invalid refresh token' })
     }
 
     try {
         const token = req.headers.authorization.split(" ")[1];
-        const decodedToken = jwt.verify(token, `env.ACCESS_TOKEN_SECRET`);
-        const userId = decodedToken.userId;
 
-        const user = await userModel.findById(userId);// no need of checking user from db
+        const decodedToken = jwt.verify(token, env.ACCESS_TOKEN_SECRET);
+        const decodedRefreshToken = jwt.verify(refreshToken, env.REFRESH_TOKEN_SECRET)
 
-        if (!user) {
+        const userId = decodedToken.userId == decodedRefreshToken.userId ? decodedRefreshToken.userId : null;
+
+        const user = await User.findOne({ where: { userId } });// no need of checking user from db
+
+        if (!userId) {
             throw new AppError({ name: 'Unauthorized', statusCode: 401, message: 'Invalid token' });
         }
 
