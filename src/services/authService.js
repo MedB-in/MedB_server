@@ -27,14 +27,15 @@ exports.loginUser = async (email, password) => {
         throw new AppError({ statusCode: 401, message: "Invalid Password" });
     }
 
-
     //Calling stored procedure
     const query = `SELECT get_user_menu(:userId);`;
 
-    const [menuData] = await sequelize.query(query, {
+    const [data] = await sequelize.query(query, {
         replacements: { userId },
         type: sequelize.QueryTypes.SELECT,
     });
+
+    const menuData = data.get_user_menu
 
     const accessToken = generateJWT(
         { userId: user.userId },
@@ -61,7 +62,7 @@ exports.loginUser = async (email, password) => {
         email: user.email,
         loginKey: user.loginKey,
     }
-
+    
     return { accessToken, refreshToken, userDetails, menuData };
 };
 
