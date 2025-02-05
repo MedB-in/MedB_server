@@ -9,10 +9,12 @@ exports.login = catchAsync(async (req, res, next) => {
     const { email, password } = req.body;
 
     const { accessToken, refreshToken, userDetails, menuData } = await authService.loginUser(email, password);
+    console.log(!dev);
 
     res.cookie("refreshToken", refreshToken, {
         httpOnly: true,
         secure: !dev,
+        sameSite: 'None',
         maxAge: ms(process.env.REFRESH_TOKEN_LIFE),
     });
     return res.status(200).json({ accessToken, userDetails, menuData });
