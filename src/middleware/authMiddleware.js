@@ -13,8 +13,7 @@ const authMiddleware = catchAsync(async (req, res, next) => {
     // get refresh token
     const refreshToken = process.env.NODE_ENV !== 'dev' ? req.cookies.refreshToken : req.headers.cookie.split("=")[1];
     console.log('refreshtoken' + refreshToken);
-    console.log('Headers:', JSON.stringify(req.headers, null, 2));
-    console.log('Request:', JSON.stringify(req, null, 2));
+    console.log('Request:', JSON.stringify(req.cookies, null, 2));
 
     if (!refreshToken) {
         throw new AppError({ name: 'Unauthorized', statusCode: 401, message: 'Invalid refresh token' })
