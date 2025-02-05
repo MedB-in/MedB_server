@@ -12,6 +12,10 @@ const authMiddleware = catchAsync(async (req, res, next) => {
 
     // get refresh token
     const refreshToken = process.env.NODE_ENV !== 'dev' ? req.cookies.refreshToken : req.headers.cookie.split("=")[1];
+    console.log('refreshtoken' + refreshToken);
+    console.log('headers' + req.headers);
+    console.log('req' + req);
+
 
 
     if (!refreshToken) {
