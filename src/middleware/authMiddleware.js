@@ -12,8 +12,6 @@ const authMiddleware = catchAsync(async (req, res, next) => {
 
     // get refresh token
     const refreshToken = req.cookies.refreshToken
-    console.log('refreshtoken' + refreshToken);
-    
 
     if (!refreshToken) {
         throw new AppError({ name: 'Unauthorized', statusCode: 401, message: 'Invalid refresh token' })

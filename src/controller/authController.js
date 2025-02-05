@@ -9,7 +9,6 @@ exports.login = catchAsync(async (req, res, next) => {
     const { email, password } = req.body;
 
     const { accessToken, refreshToken, userDetails, menuData } = await authService.loginUser(email, password);
-    console.log(!dev);
 
     res.cookie("refreshToken", refreshToken, {
         httpOnly: true,
