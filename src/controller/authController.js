@@ -13,6 +13,7 @@ exports.login = catchAsync(async (req, res, next) => {
     res.cookie("refreshToken", refreshToken, {
         httpOnly: true,
         secure: !dev,
+        sameSite: 'None',
         maxAge: ms(process.env.REFRESH_TOKEN_LIFE),
     });
     return res.status(200).json({ accessToken, userDetails, menuData });
