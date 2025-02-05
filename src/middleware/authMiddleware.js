@@ -7,11 +7,12 @@ const env = require('../util/validateEnv');
 const authMiddleware = catchAsync(async (req, res, next) => {
 
     if (!req.headers) {
-        throw new AppError({ name: 'Unauthorized', statusCode: 401, message: 'Invalid access token 123456' });
+        throw new AppError({ name: 'Unauthorized', statusCode: 401, message: 'Invalid access token' });
     }
 
     // get refresh token
-    const refreshToken = req.headers.cookie.split("=")[1];
+    const refreshToken = process.env.NODE_ENV !== 'dev' ? req.cookies.refreshToken : req.headers.cookie.split("=")[1];
+
 
     if (!refreshToken) {
         throw new AppError({ name: 'Unauthorized', statusCode: 401, message: 'Invalid refresh token' })
@@ -25,7 +26,7 @@ const authMiddleware = catchAsync(async (req, res, next) => {
 
         const userId = decodedToken.userId == decodedRefreshToken.userId ? decodedRefreshToken.userId : null;
 
-        const user = await User.findOne({ where: { userId } });// no need of checking user from db
+        const user = await User.findOne({ where: { userId } });
 
         if (!userId) {
             throw new AppError({ name: 'Unauthorized', statusCode: 401, message: 'Invalid token' });
