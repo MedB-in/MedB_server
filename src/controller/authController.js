@@ -10,7 +10,7 @@ exports.login = catchAsync(async (req, res, next) => {
 
     res.cookie("refreshToken", refreshToken, {
         httpOnly: true,
-        secure: ["production", "test"].includes(process.env.NODE_ENV),
+        secure: process.env.NODE_ENV !== 'dev',
         maxAge: ms(process.env.REFRESH_TOKEN_LIFE),
     });
     return res.status(200).json({ accessToken, userDetails, menuData });
@@ -35,7 +35,7 @@ exports.logout = catchAsync(async (req, res, next) => {
 
     res.clearCookie('refreshToken', {
         httpOnly: true,
-        secure: ["production", "test"].includes(process.env.NODE_ENV),
+        secure: process.env.NODE_ENV !== 'dev',
     });
 
     res.sendStatus(200);

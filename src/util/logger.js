@@ -20,9 +20,9 @@ class MongoDBTransport extends Transport {
 
   log(info, callback) {
     const logMessage = info;
-
-    // Check if the error status code is in the list of loggable codes
-    if (logMessage.statusCode && loggableStatusCodes.includes(logMessage.statusCode)) {
+    
+    // Log all errors if the array is empty, otherwise log only specified codes
+    if (!loggableStatusCodes.length || (logMessage.statusCode && loggableStatusCodes.includes(logMessage.statusCode))) {
       const log = new Log({
         message: logMessage.message,
         level: logMessage.level,
@@ -30,7 +30,7 @@ class MongoDBTransport extends Transport {
         clientIp: logMessage.clientIp,
         url: logMessage.url,
         timestamp: logMessage.timestamp,
-        statusCode: logMessage.statusCode,  // Log the status code
+        statusCode: logMessage.statusCode || 500, 
       });
 
       log
