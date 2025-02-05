@@ -2,6 +2,8 @@ const catchAsync = require("../util/catchAsync");
 const authService = require("../services/authService");
 const ms = require("ms");
 
+const dev = process.env.NODE_ENV === "dev";
+
 // Login Controller
 exports.login = catchAsync(async (req, res, next) => {
     const { email, password } = req.body;
@@ -10,7 +12,7 @@ exports.login = catchAsync(async (req, res, next) => {
 
     res.cookie("refreshToken", refreshToken, {
         httpOnly: true,
-        secure: process.env.NODE_ENV !== 'dev',
+        secure: !dev,
         maxAge: ms(process.env.REFRESH_TOKEN_LIFE),
     });
     return res.status(200).json({ accessToken, userDetails, menuData });
@@ -35,7 +37,7 @@ exports.logout = catchAsync(async (req, res, next) => {
 
     res.clearCookie('refreshToken', {
         httpOnly: true,
-        secure: process.env.NODE_ENV !== 'dev',
+        secure: !dev,
     });
 
     res.sendStatus(200);
