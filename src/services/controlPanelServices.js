@@ -4,12 +4,11 @@ const Module = require('../models/sqlModels/moduleModel');
 const AppError = require("../util/appError");
 
 // Service function to fetch all menus with modules
-exports.getAllMenusWithModules = async (userId) => {
+exports.getAllMenusWithModules = async () => {
     try {
-        const query = `SELECT get_user_menu(:userId);`;
+        const query = `SELECT get_all_menus_with_modules();`;
 
         const [menuData] = await sequelize.query(query, {
-            replacements: { userId },
             type: sequelize.QueryTypes.SELECT,
         });
 
@@ -17,7 +16,7 @@ exports.getAllMenusWithModules = async (userId) => {
             throw new AppError({ statusCode: 404, message: "No menus found" });
         }
 
-        return menuData.get_user_menu;
+        return menuData.get_all_menus_with_modules;
     } catch (error) {
         throw new AppError({ statusCode: 500, message: "Error fetching menu data", error });
     }

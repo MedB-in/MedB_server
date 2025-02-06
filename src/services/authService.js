@@ -62,7 +62,7 @@ exports.loginUser = async (email, password) => {
         email: user.email,
         loginKey: user.loginKey,
     }
-    
+
     return { accessToken, refreshToken, userDetails, menuData };
 };
 
@@ -88,7 +88,7 @@ exports.refreshAccessToken = async (refreshToken) => {
 
     // Generate new access token
     const accessToken = generateJWT(
-        { userId, role: decodedToken.role },
+        { userId },
         env.ACCESS_TOKEN_SECRET,
         env.ACCESS_TOKEN_LIFE
     );
@@ -98,12 +98,13 @@ exports.refreshAccessToken = async (refreshToken) => {
 
 // Service for logging out
 exports.logout = async (refreshToken) => {
-    if (!refreshToken) {
+    if (!refreshToken)
         throw new AppError({ statusCode: 401, message: 'Refresh token not provided' });
-    }
 
-    const findTokenAndDelete = await Token.findOneAndDelete({ refreshToken });
-    if (!findTokenAndDelete) {
-        throw new AppError({ statusCode: 401, message: 'Invalid refresh token' });
+    try {
+        const { userId } = jwt.verify(refreshToken, env.REFRESH_TOKEN_SECRET);
+        await Token.findOneAndDelete({ userId })
+    } catch {
+        throw new AppError({ statusCode: 401, message: "Invalid refresh token" });
     }
 };
