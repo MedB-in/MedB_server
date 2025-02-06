@@ -1,0 +1,77 @@
+"CREATE OR REPLACE FUNCTION get_all_products_with_menus_and_modules()
+ RETURNS json
+ LANGUAGE plpgsql
+AS $function$
+DECLARE 
+    result JSON;
+BEGIN
+    -- Fetch all products with their associated modules and menus
+    SELECT json_agg(products_with_modules_and_menus) INTO result
+    FROM (
+        SELECT 
+            p.""productId"",
+            p.""productName"",
+            p.""description"", 
+            p.""productType"",
+            p.""notes"",
+            p.""values"",
+            p.""isPublic"",
+            p.""isActive"",
+            p.""isFree"",
+            p.""isTrial"",
+            p.""amount"",
+            p.""taxAmount"",
+            p.""netAmount"",
+            p.""trialDays"",
+            p.""createdOn"",
+            p.""createdBy"",
+            p.""modifiedOn"",
+            p.""modifiedBy"",
+            (
+                SELECT json_agg(modules_with_menus)
+                FROM (
+                    SELECT 
+                        m.""moduleId"",
+                        m.""moduleName"",
+                        m.""sortOrder"",
+                        m.""moduleIcon"",
+                        (
+                            SELECT json_agg(menus)
+                            FROM (
+                                SELECT 
+                                    me.""menuId"",
+                                    me.""menuName"",
+                                    me.""sortOrder"",
+                                    me.""menuIcon"",
+                                    me.""actionName"",
+                                    me.""controllerName""
+                                FROM ""Menu"" me
+                                WHERE me.""menuId"" IN (
+                                    SELECT pm.""menuId""
+                                    FROM ""ProductMenu"" pm
+                                    WHERE pm.""productId"" = p.""productId""
+                                )
+                                ORDER BY me.""sortOrder""
+                            ) AS menus
+                        ) AS menus
+                    FROM ""Module"" m
+                    WHERE m.""moduleId"" IN (
+                        SELECT DISTINCT me.""moduleId""
+                        FROM ""Menu"" me
+                        WHERE me.""menuId"" IN (
+                            SELECT pm.""menuId""
+                            FROM ""ProductMenu"" pm
+                            WHERE pm.""productId"" = p.""productId""
+                        )
+                    )
+                    ORDER BY m.""sortOrder""
+                ) AS modules_with_menus
+            ) AS modules
+        FROM ""Products"" p
+        ORDER BY p.""productName""
+    ) AS products_with_modules_and_menus;
+
+    RETURN result;
+END;
+$function$
+"

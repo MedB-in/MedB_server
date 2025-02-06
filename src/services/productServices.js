@@ -46,7 +46,7 @@ exports.addProduct = async (data) => {
     } = data;
 
     if (!productName || isActive === undefined || isPublic === undefined || isFree === undefined || isTrial === undefined) {
-        throw new AppError({ statusCode: 400, message: 'Missing required fields: productName, isActive, isPublic, isFree, isTrial' });
+        throw new AppError({ statusCode: 400, message: 'Missing required fields' });
     }
 
     const existingProduct = await Products.findOne({ where: { productName } });
@@ -150,6 +150,17 @@ exports.addProductMenu = async (data) => {
     const menuExists = await Menu.findByPk(menuId);
     if (!menuExists) {
         throw new AppError({ statusCode: 404, message: 'Menu not found' });
+    }
+
+    const existingProductMenu = await ProductMenu.findOne({
+        where: { productId, menuId },
+    });
+
+    if (existingProductMenu) {
+        throw new AppError({
+            statusCode: 400,
+            message: 'This menu is already added to the product.',
+        });
     }
 
     const productMenu = await ProductMenu.create({
