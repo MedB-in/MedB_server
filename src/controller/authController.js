@@ -13,8 +13,8 @@ exports.login = catchAsync(async (req, res, next) => {
     res.cookie("refreshToken", refreshToken, {
         httpOnly: true,
         secure: !dev,
-        sameSite: 'None',
         maxAge: ms(process.env.REFRESH_TOKEN_LIFE),
+        ...(dev ? {} : { sameSite: 'None' })
     });
     return res.status(200).json({ accessToken, userDetails, menuData });
 });
@@ -23,9 +23,9 @@ exports.login = catchAsync(async (req, res, next) => {
 // Refresh Access Token Controller
 exports.refreshAccessToken = catchAsync(async (req, res, next) => {
     const refreshToken = req.cookies.refreshToken;
-    
+
     const { accessToken } = await authService.refreshAccessToken(refreshToken);
-    
+
     return res.status(200).json({ accessToken });
 });
 
