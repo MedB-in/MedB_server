@@ -62,7 +62,7 @@ exports.loginUser = async (email, password) => {
         email: user.email,
         loginKey: user.loginKey,
     }
-    
+
     return { accessToken, refreshToken, userDetails, menuData };
 };
 
@@ -88,7 +88,7 @@ exports.refreshAccessToken = async (refreshToken) => {
 
     // Generate new access token
     const accessToken = generateJWT(
-        { userId, role: decodedToken.role },
+        { userId },
         env.ACCESS_TOKEN_SECRET,
         env.ACCESS_TOKEN_LIFE
     );

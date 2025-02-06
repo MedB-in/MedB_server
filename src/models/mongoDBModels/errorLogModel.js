@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const ms = require('ms');
 
 const errorLogSchema = new mongoose.Schema(
   {
@@ -17,8 +18,7 @@ const errorLogSchema = new mongoose.Schema(
   }
 );
 
-const expirationDays = process.env.ERROR_LOG_EXPIRATION_DAYS || 7; // Default to 7 days
-const expirationSeconds = expirationDays * 24 * 60 * 60;
+const expirationSeconds = ms(process.env.ERROR_LOG_EXPIRATION); 
 
 errorLogSchema.index({ timestamp: 1 }, { expireAfterSeconds: expirationSeconds });
 
