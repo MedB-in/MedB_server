@@ -20,6 +20,7 @@ BEGIN
                         me."sortOrder",
                         me."menuIcon",
                         me."actionName",
+                        me."isActive",
                         me."controllerName"
                     FROM "Menu" me
                     WHERE me."moduleId" = m."moduleId"

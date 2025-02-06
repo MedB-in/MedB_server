@@ -46,8 +46,7 @@ exports.addModuleService = async (moduleData) => {
 };
 
 // Service function to edit a module
-exports.editModuleService = async (moduleId, moduleName, sortOrder, moduleIcon, modifiedBy) => {
-    // Check if the module exists
+exports.editModuleService = async (moduleId, data, modifiedBy) => {
     const existingModule = await Module.findOne({
         where: { moduleId },
     });
@@ -56,13 +55,12 @@ exports.editModuleService = async (moduleId, moduleName, sortOrder, moduleIcon, 
         throw new AppError({ statusCode: 404, message: 'Module not found' });
     }
 
-    // Update the module
     await Module.update(
         {
-            moduleName,
-            sortOrder,
-            moduleIcon,
-            modifiedBy,
+            moduleName: data.moduleName ?? existingModule.moduleName,
+            sortOrder: data.sortOrder ?? existingModule.sortOrder,
+            moduleIcon: data.moduleIcon ?? existingModule.moduleIcon,
+            modifiedBy: modifiedBy ?? existingModule.modifiedBy,
             modifiedOn: new Date(),
         },
         { where: { moduleId } }
@@ -77,10 +75,6 @@ exports.editModuleService = async (moduleId, moduleName, sortOrder, moduleIcon, 
 
 // Service function to add a menu
 exports.addMenuService = async ({ moduleId, menuName, actionName, controllerName, isActive, sortOrder, menuIcon, createdBy }) => {
-
-    if (!moduleId || !menuName || isActive === undefined || !sortOrder) {
-        throw new AppError({ statusCode: 400, message: 'Missing required fields for menu creation' });
-    }
 
     const existingMenu = await Menu.findOne({
         where: { menuName },
@@ -117,9 +111,6 @@ exports.addMenuService = async ({ moduleId, menuName, actionName, controllerName
 
 // Service function to edit a menu
 exports.editMenuService = async (menuId, data, modifiedBy) => {
-    if (!menuId) {
-        throw new AppError({ statusCode: 400, message: "menuId is required" });
-    }
     const menuExists = await Menu.findOne({ where: { menuId } });
 
     if (!menuExists) {
@@ -140,4 +131,3 @@ exports.editMenuService = async (menuId, data, modifiedBy) => {
 
     await Menu.update(updatedData, { where: { menuId } });
 };
-

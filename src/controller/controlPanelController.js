@@ -14,7 +14,7 @@ exports.addModule = catchAsync(async (req, res, next) => {
     const { moduleName, sortOrder, moduleIcon } = req.body;
     const createdBy = req.user.userId;
 
-    if (!moduleName || sortOrder === undefined || !createdBy) {
+    if (!moduleName || sortOrder === undefined || moduleIcon === undefined || !createdBy) {
         throw new AppError({ statusCode: 400, message: 'Missing required fields for module' });
     }
 
@@ -44,7 +44,7 @@ exports.editModule = catchAsync(async (req, res, next) => {
         return next(new AppError({ statusCode: 400, message: 'Missing required fields for module update' }));
     }
 
-    const result = await controlPanelServices.editModuleService(moduleId, moduleName, sortOrder, moduleIcon, modifiedBy);
+    const result = await controlPanelServices.editModuleService(moduleId, { moduleName, sortOrder, moduleIcon }, modifiedBy);
     return res.status(result.statusCode).json({
         status: result.status,
         message: result.message,
@@ -56,6 +56,10 @@ exports.editModule = catchAsync(async (req, res, next) => {
 exports.addMenu = catchAsync(async (req, res, next) => {
     const { moduleId, menuName, actionName, controllerName, isActive, sortOrder, menuIcon } = req.body;
     const createdBy = req.user.userId;
+
+    if (!moduleId || !menuName || !controllerName || !actionName || !menuIcon || !createdBy || isActive === undefined || !sortOrder) {
+        throw new AppError({ statusCode: 400, message: 'Missing required fields for menu creation' });
+    }
 
     const result = await controlPanelServices.addMenuService({
         moduleId,
@@ -81,8 +85,10 @@ exports.editMenu = catchAsync(async (req, res, next) => {
     const { moduleId, menuName, actionName, controllerName, isActive, sortOrder, menuIcon } = req.body;
     const menuId = req.params.id;
     const modifiedBy = req.user.userId;
-    console.log(moduleId);
 
+    if (!moduleId || modifiedBy === undefined) {
+        throw new AppError({ statusCode: 400, message: 'Missing required fields for menu creation' });
+    }
     await controlPanelServices.editMenuService(menuId, { moduleId, menuName, actionName, controllerName, isActive, sortOrder, menuIcon }, modifiedBy);
 
     return res.status(200).json({
