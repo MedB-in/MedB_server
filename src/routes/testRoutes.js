@@ -1,6 +1,7 @@
 const { Router } = require('express');
 const testController = require('../controller/testController');
 // const authController = require('../controller/authController');
+const clinicController = require('../controller/clinicController');
 const router = Router();
 
 // POST route for error testing
@@ -34,5 +35,10 @@ router.post('/editMenu', testController.editMenu);
 
 //test routes for subscription
 router.post('/addSubscription', testController.addSubscription);
+
+// router.post('/clinic/addClinic', clinicController.addClinic);
+// router.post('/clinic/editClinic/:clinicId', clinicController.editClinic);
+
+
 
 module.exports = router;

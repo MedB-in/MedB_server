@@ -1,0 +1,3 @@
+The GEOGRAPHY type is provided by PostGIS
+
+CREATE EXTENSION IF NOT EXISTS postgis;

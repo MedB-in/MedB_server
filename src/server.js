@@ -52,11 +52,12 @@ app.get('/', (_req, res) => {
 });
 
 // API Endpoints
-app.use('/test', testOnly)
+// app.use('/test', testOnly)
 app.use('/api/auth', auth);
 app.use(authMiddleware)
 app.use('/api/controlPanel', controlPanelRoutes);
 app.use('/api/product', productController);
+// app.use('/api/clinic', clinicController);
 // app.use('/api/user', userController);
 // app.use('/api/patient', patientController);
 
