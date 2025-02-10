@@ -20,7 +20,8 @@ const errorLogger = require('./middleware/errorLogger');
 const auth = require('./routes/authentication');
 const testOnly = require('./routes/testRoutes');
 const controlPanelRoutes = require('./routes/controlPanelRoutes');    
-const productController = require('./routes/productRoutes');
+const productRoutes = require('./routes/productRoutes');
+const clinicRoutes = require('./routes/clinicRoutes');
 
 const app = express();
 
@@ -56,8 +57,8 @@ app.get('/', (_req, res) => {
 app.use('/api/auth', auth);
 app.use(authMiddleware)
 app.use('/api/controlPanel', controlPanelRoutes);
-app.use('/api/product', productController);
-// app.use('/api/clinic', clinicController);
+app.use('/api/product', productRoutes);
+app.use('/api/clinic', clinicRoutes);
 // app.use('/api/user', userController);
 // app.use('/api/patient', patientController);
 

@@ -2,6 +2,15 @@ const { sequelize } = require('../config/postgresConnection');
 const AppError = require("../util/appError");
 const Clinic = require('../models/sqlModels/clinicsModel');
 
+// Service function to get all Clinics
+exports.getAllClinicsService = async () => {
+    const clinics = await Clinic.findAll();
+    if (!clinics) {
+        throw new AppError({ statusCode: 404, message: 'No clinics found' });
+    }
+
+    return clinics.map(clinic => clinic.dataValues);
+};
 
 
 // Service function to add a Clinic
@@ -59,6 +68,7 @@ exports.addClinicService = async ({
 
 // Service function to edit a Clinic
 exports.editClinicService = async (clinicId, updatedData) => {
+    
     const clinic = await Clinic.findByPk(clinicId);
 
     if (!clinic) {

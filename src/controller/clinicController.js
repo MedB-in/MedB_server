@@ -2,6 +2,13 @@ const catchAsync = require("../util/catchAsync");
 const clinicServices = require("../services/clinicServices");
 const AppError = require("../util/appError");
 
+// Controller to get Clinics
+exports.getAllClinics = catchAsync(async (req, res, next) => {
+    const clinics = await clinicServices.getAllClinicsService();
+    return res.status(200).json({ clinics });
+});
+
+
 // Controller to add a Clinic
 exports.addClinic = catchAsync(async (req, res, next) => {
     const {
@@ -53,7 +60,8 @@ exports.addClinic = catchAsync(async (req, res, next) => {
 
 // Controller to edit a Clinic
 exports.editClinic = catchAsync(async (req, res, next) => {
-    const { clinicId } = req.params;
+    
+    const { id } = req.params;
     const {
         name,
         location,
@@ -72,11 +80,11 @@ exports.editClinic = catchAsync(async (req, res, next) => {
 
     const modifiedBy = req.user.userId;
 
-    if (!clinicId) {
+    if (!id) {
         throw new AppError({ statusCode: 400, message: 'Clinic ID is required' });
     }
 
-    const result = await clinicServices.editClinicService(clinicId, {
+    const result = await clinicServices.editClinicService(id, {
         name,
         location,
         address,

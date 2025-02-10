@@ -24,6 +24,7 @@ exports.addProduct = catchAsync(async (req, res, next) => {
 
 // Controller to edit an existing product
 exports.editProduct = catchAsync(async (req, res, next) => {
+    // const productId = req.params;
     const { userId } = req.user;
     const data = { ...req.body, modifiedBy: userId };
 
