@@ -4,6 +4,7 @@ const doctorService = require('../services/doctorService');
 // Controller function to get all doctors
 exports.getAllDoctors = catchAsync(async (req, res, next) => {
     const doctors = await doctorService.getAllDoctors();
+
     return res.status(200).json({
         status: 'success',
         message: 'Doctors retrieved successfully',
@@ -30,10 +31,10 @@ exports.addDoctor = catchAsync(async (req, res, next) => {
 // Controller function to edit a doctor
 exports.editDoctor = catchAsync(async (req, res, next) => {
     const { userId } = req.user;
-    const { doctorId } = req.params;
+    const { id } = req.params;
     const updatedData = { ...req.body, modifiedBy: userId, modifiedOn: new Date() };
 
-    const updatedDoctor = await doctorService.editDoctor(doctorId, updatedData);
+    const updatedDoctor = await doctorService.editDoctor(id, updatedData);
 
     return res.status(200).json({
         status: 'success',

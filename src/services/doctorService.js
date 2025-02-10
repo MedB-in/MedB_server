@@ -1,23 +1,23 @@
 const { sequelize } = require('../config/postgresConnection');
 const AppError = require('../utils/appError');
 const Doctor = require('../models/sqlModels/doctorsModel');
-const { profile } = require('winston');
 
 
 // Service to get all doctors
 exports.getAllDoctors = async () => {
-    return await Doctor.findAll({
-        attributes: [
-            'doctorId', 'firstName', 'lastName', 'email', 'phone',
-            'speciality', 'experience', 'gender', 'isActive'
-        ],
-    });
+    const doctors = await Doctor.findAll();
+
+    if (!doctors) {
+        throw new AppError({ statusCode: 404, message: 'No doctors found' });
+    }
+
+    return doctors.map(doctors => doctors.dataValues)
 };
 
 
 // Service to add a doctor
 exports.addDoctor = async (data) => {
-    const { firstName, middleName, lastName, email, phone, profilePicture, speciality, experience, gender, isActive, createdBy } = data;
+    const { firstName, middleName, lastName, email, phone, profilePicture, speciality, qualifications, experience, gender, isActive, createdBy } = data;
 
     if (!firstName || !lastName || !email || !phone || !speciality || !experience || !gender) {
         throw new AppError({ statusCode: 400, message: 'Missing required fields for doctor' });
@@ -38,6 +38,7 @@ exports.addDoctor = async (data) => {
         profilePicture,
         speciality,
         experience,
+        qualifications,
         gender,
         isActive,
         createdBy,
