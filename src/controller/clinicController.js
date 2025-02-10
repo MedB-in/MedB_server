@@ -1,6 +1,6 @@
-const catchAsync = require("../util/catchAsync");
+const catchAsync = require("../utils/catchAsync");
 const clinicServices = require("../services/clinicServices");
-const AppError = require("../util/appError");
+const AppError = require("../utils/appError");
 
 // Controller to get Clinics
 exports.getAllClinics = catchAsync(async (req, res, next) => {

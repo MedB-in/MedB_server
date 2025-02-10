@@ -1,4 +1,4 @@
-const catchAsync = require("../util/catchAsync");
+const catchAsync = require("../utils/catchAsync");
 const authService = require("../services/authService");
 const ms = require("ms");
 

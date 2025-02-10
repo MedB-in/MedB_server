@@ -1,9 +1,9 @@
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
-const AppError = require("../util/appError");
+const AppError = require("../utils/appError");
 const User = require("../models/sqlModels/userModel");
 const Token = require("../models/mongoDBModels/tokenModel");
-const env = require("../util/validateEnv");
+const env = require("../utils/validateEnv");
 const { sequelize } = require('../config/postgresConnection');
 
 // Generate JWT function

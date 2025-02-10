@@ -1,5 +1,5 @@
 require('dotenv').config();
-const env = require('../util/validateEnv');
+const env = require('../utils/validateEnv');
 const mongoose = require('mongoose');
 
 const db = env.MONGO_CONNECTION_STRING;

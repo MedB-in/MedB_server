@@ -1,5 +1,5 @@
 const { sequelize } = require('../config/postgresConnection');
-const AppError = require("../util/appError");
+const AppError = require("../utils/appError");
 const Clinic = require('../models/sqlModels/clinicsModel');
 
 // Service function to get all Clinics

@@ -1,7 +1,7 @@
 const { sequelize } = require('../config/postgresConnection');
 const Menu = require('../models/sqlModels/menuModel');
 const Module = require('../models/sqlModels/moduleModel');
-const AppError = require("../util/appError");
+const AppError = require("../utils/appError");
 
 // Service function to fetch all menus with modules
 exports.getAllMenusWithModules = async () => {

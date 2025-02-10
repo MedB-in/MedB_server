@@ -1,6 +1,6 @@
-const catchAsync = require("../util/catchAsync");
+const catchAsync = require("../utils/catchAsync");
 const controlPanelServices = require("../services/controlPanelServices");
-const AppError = require("../util/appError");
+const AppError = require("../utils/appError");
 
 // Controller to get all menus with modules
 exports.getAllMenus = catchAsync(async (req, res, next) => {

@@ -1,4 +1,4 @@
-const catchAsync = require('../util/catchAsync');
+const catchAsync = require('../utils/catchAsync');
 const productService = require('../services/productServices');
 
 

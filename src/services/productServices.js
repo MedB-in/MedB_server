@@ -3,7 +3,7 @@ const Menu = require('../models/sqlModels/menuModel');
 const Module = require('../models/sqlModels/moduleModel');
 const ProductMenu = require('../models/sqlModels/productMenuModel');
 const Products = require('../models/sqlModels/productsModel');
-const AppError = require('../util/appError');
+const AppError = require('../utils/appError');
 
 
 //Service to get all products

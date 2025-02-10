@@ -2,7 +2,7 @@ require('dotenv').config();
 const { Sequelize } = require('sequelize');
 const fs = require('fs');
 const path = require('path');
-const env = require('../util/validateEnv');
+const env = require('../utils/validateEnv');
 
 const db = env.POSTGRES_CONNECTION_STRING;
 
