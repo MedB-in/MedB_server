@@ -1,8 +1,8 @@
 const jwt = require('jsonwebtoken');
 const User = require('../models/sqlModels/userModel');
-const catchAsync = require('../util/catchAsync');
-const AppError = require('../util/appError');
-const env = require('../util/validateEnv');
+const catchAsync = require('../utils/catchAsync');
+const AppError = require('../utils/appError');
+const env = require('../utils/validateEnv');
 
 const authMiddleware = catchAsync(async (req, res, next) => {
 

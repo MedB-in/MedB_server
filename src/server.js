@@ -9,18 +9,20 @@ const cookieParser = require('cookie-parser');
 const connectMongoDB = require('./config/mongoConnection');
 const { connectPostgreSQL } = require('./config/postgresConnection');
 
-const AppError = require('./util/appError');
+const AppError = require('./utils/appError');
 const authMiddleware = require('./middleware/authMiddleware');
 const globalErrorHandler = require('./middleware/errorHandler');
-const rateLimiter = require('./util/rateLimiter');
-const env = require('./util/validateEnv');
+const rateLimiter = require('./utils/rateLimiter');
+const env = require('./utils/validateEnv');
 const errorLogger = require('./middleware/errorLogger');
 
 // Routes module
 const auth = require('./routes/authentication');
 const testOnly = require('./routes/testRoutes');
 const controlPanelRoutes = require('./routes/controlPanelRoutes');    
-const productController = require('./routes/productRoutes');
+const productRoutes = require('./routes/productRoutes');
+const clinicRoutes = require('./routes/clinicRoutes');
+const doctorRoutes = require('./routes/doctorRoutes');
 
 const app = express();
 
@@ -52,12 +54,13 @@ app.get('/', (_req, res) => {
 });
 
 // API Endpoints
-app.use('/test', testOnly)
+// app.use('/test', testOnly)
 app.use('/api/auth', auth);
 app.use(authMiddleware)
 app.use('/api/controlPanel', controlPanelRoutes);
-app.use('/api/product', productController);
-// app.use('/api/user', userController);
+app.use('/api/product', productRoutes);
+app.use('/api/clinic', clinicRoutes);
+app.use('/api/doctor', doctorRoutes);
 // app.use('/api/patient', patientController);
 
 // Error Handler

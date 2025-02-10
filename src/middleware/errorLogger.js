@@ -1,4 +1,4 @@
-const logger = require('../util/logger');
+const logger = require('../utils/logger');
 
 const errorLogger = (err, req, res, next) => {
     const clientIp = req.ip || req.connection.remoteAddress;
