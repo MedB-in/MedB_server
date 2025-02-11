@@ -1,0 +1,54 @@
+CREATE OR REPLACE FUNCTION getClinicDetails(p_clinicId INT)
+RETURNS JSON AS $$
+DECLARE
+    clinic_data JSON;
+BEGIN
+    -- Fetch clinic details with nested doctors and slots
+    SELECT jsonb_build_object(
+        'clinicId', c."clinicId",
+        'clinicName', c."name",
+        'address', c."address",
+        'city', c."city",
+        'state', c."state",
+        'country', c."country",
+        'postalCode', c."postalCode",
+        'contact', c."contact",
+        'email', c."email",
+        'website', c."website",
+        'clinicPicture', c."clinicPicture",
+        'doctors', COALESCE(
+            jsonb_agg(
+                jsonb_build_object(
+                    'doctorId', d."doctorId",
+                    'doctorName', CONCAT(d."firstName", ' ', COALESCE(d."middleName", ''), ' ', d."lastName"),
+                    'speciality', d."speciality",
+                    'experience', d."experience",
+                    'qualifications', d."qualifications",
+                    'phone', d."phone",
+                    'email', d."email",
+                    'profilePicture', d."profilePicture",
+                    'slots', (
+                        SELECT COALESCE(jsonb_agg(
+                            jsonb_build_object(
+                                'slotId', ds."doctorSlotId",
+                                'timingFrom', ds."timingFrom",
+                                'timingTo', ds."timingTo",
+                                'slotGap', ds."slotGap"
+                            )
+                        ), '[]'::jsonb)
+                        FROM "DoctorSlots" ds
+                        WHERE ds."doctorId" = d."doctorId" AND ds."clinicId" = c."clinicId"
+                    )
+                )
+            ) FILTER (WHERE d."doctorId" IS NOT NULL), '[]'::jsonb
+        )
+    ) INTO clinic_data
+    FROM "Clinics" c
+    LEFT JOIN "DoctorClinic" dc ON c."clinicId" = dc."clinicId"
+    LEFT JOIN "Doctors" d ON dc."doctorId" = d."doctorId"
+    WHERE c."clinicId" = p_clinicId
+    GROUP BY c."clinicId";
+
+    RETURN clinic_data;
+END;
+$$ LANGUAGE plpgsql;

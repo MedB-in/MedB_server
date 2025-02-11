@@ -9,6 +9,11 @@ const Doctor = sequelize.define('Doctor', {
         autoIncrement: true,
         allowNull: false,
     },
+    registration: {
+        type: DataTypes.STRING,
+        allowNull: false,
+        unique: true,
+    },
     firstName: {
         type: DataTypes.STRING,
         allowNull: false,
@@ -63,11 +68,11 @@ const Doctor = sequelize.define('Doctor', {
         type: DataTypes.GEOGRAPHY('Point', 4326), // Geo-location
         allowNull: true,
     },
-    address: {
-        type: DataTypes.TEXT,
+    city: {
+        type: DataTypes.STRING,
         allowNull: true,
     },
-    city: {
+    district: {
         type: DataTypes.STRING,
         allowNull: true,
     },
