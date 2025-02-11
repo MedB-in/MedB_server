@@ -16,6 +16,7 @@ exports.addClinic = catchAsync(async (req, res, next) => {
         location,
         address,
         city,
+        district,
         state,
         country,
         postalCode,
@@ -38,6 +39,7 @@ exports.addClinic = catchAsync(async (req, res, next) => {
         location,
         address,
         city,
+        district,
         state,
         country,
         postalCode,
@@ -60,13 +62,14 @@ exports.addClinic = catchAsync(async (req, res, next) => {
 
 // Controller to edit a Clinic
 exports.editClinic = catchAsync(async (req, res, next) => {
-    
+
     const { id } = req.params;
     const {
         name,
         location,
         address,
         city,
+        district,
         state,
         country,
         postalCode,
@@ -89,6 +92,7 @@ exports.editClinic = catchAsync(async (req, res, next) => {
         location,
         address,
         city,
+        district,
         state,
         country,
         postalCode,
@@ -107,3 +111,10 @@ exports.editClinic = catchAsync(async (req, res, next) => {
         data: result.data,
     });
 });
+
+//Controller to get a single Clinic details with doctors
+exports.getClinicDetails = catchAsync(async (req, res, next) => {
+    const { id } = req.params;
+    const data = await clinicServices.getClinicWithDoctors(id);
+    return res.status(200).json({ data });
+})

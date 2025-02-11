@@ -10,6 +10,7 @@ router
 
 router
     .route('/:id')
+    .get(clinicController.getClinicDetails)
     .put(clinicController.editClinic);
 
 module.exports = router;

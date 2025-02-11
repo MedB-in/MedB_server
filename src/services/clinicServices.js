@@ -1,6 +1,7 @@
 const { sequelize } = require('../config/postgresConnection');
 const AppError = require("../utils/appError");
 const Clinic = require('../models/sqlModels/clinicsModel');
+const DoctorSlot = require('../models/sqlModels/doctorSlot');
 
 // Service function to get all Clinics
 exports.getAllClinicsService = async () => {
@@ -19,6 +20,7 @@ exports.addClinicService = async ({
     location,
     address,
     city,
+    district,
     state,
     country,
     postalCode,
@@ -32,17 +34,18 @@ exports.addClinicService = async ({
 }) => {
 
     const existingClinic = await Clinic.findOne({
-        where: { name },
+        where: { email },
     });
 
     if (existingClinic) {
-        throw new AppError({ statusCode: 400, message: 'Clinic with this name already exists' }); //need to change this to handle multiple clinics with same name 
+        throw new AppError({ statusCode: 400, message: 'Clinic with this email already exists' }); //need to change this to handle multiple clinics with same name 
     }
 
     const clinic = await Clinic.create({
         name,
         location,
         address,
+        district,
         city,
         state,
         country,
@@ -68,14 +71,13 @@ exports.addClinicService = async ({
 
 // Service function to edit a Clinic
 exports.editClinicService = async (clinicId, updatedData) => {
-    
+
     const clinic = await Clinic.findByPk(clinicId);
 
     if (!clinic) {
         throw new AppError({ statusCode: 404, message: 'Clinic not found' });
     }
 
-    // Update clinic details
     await clinic.update({
         ...updatedData,
         modifiedBy: updatedData.modifiedBy,
@@ -88,4 +90,19 @@ exports.editClinicService = async (clinicId, updatedData) => {
         message: 'Clinic updated successfully',
         data: clinic,
     };
+};
+
+//Service function to get a single Clinic details with doctors
+exports.getClinicWithDoctors = async (clinicId) => {
+try {
+    const query = `SELECT * FROM getClinicDetails(:id);`;
+
+    const [data] = await sequelize.query(query, {
+        replacements: { id: clinicId },
+        type: sequelize.QueryTypes.SELECT,
+    });
+    return data.getclinicdetails;
+} catch (error) {
+    throw new AppError({ statusCode: 500, message: "Error fetching clinic data", error });
+}
 };

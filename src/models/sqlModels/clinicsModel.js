@@ -25,6 +25,10 @@ const Clinic = sequelize.define('Clinic', {
         type: DataTypes.STRING,
         allowNull: false,
     },
+    district: {
+        type: DataTypes.STRING,
+        allowNull: false,
+    },
     state: {
         type: DataTypes.STRING,
         allowNull: false,

@@ -41,7 +41,7 @@ const connectPostgreSQL = async (retries = 3) => {
 
 (async () => {
     try {
-        await sequelize.sync({ alter: true }); 
+        await sequelize.sync({ alter: false }); //Set to true for auto migration or make changes for production 
         console.log('✅ Database synchronized successfully.');
     } catch (error) {
         console.error('❌ Error synchronizing database:', error.message);
