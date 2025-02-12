@@ -1,0 +1,56 @@
+CREATE OR REPLACE FUNCTION getAllDoctors()
+RETURNS JSON AS $$
+DECLARE
+    doctors_data JSON;
+BEGIN
+    SELECT jsonb_agg(
+        jsonb_build_object(
+            'doctorId', d."doctorId",
+            'firstName', d."firstName",
+            'middleName', d."middleName",
+            'lastName', d."lastName",
+            'speciality', d."speciality",
+            'registration', d."registration",
+            'experience', d."experience",
+            'gender', d."gender",
+            'qualifications', d."qualifications",
+            'phone', d."phone",
+            'email', d."email",
+            'address', d."address",
+            'city', d."city",
+            'district', d."district",
+            'state', d."state",
+            'country', d."country",
+            'postalCode', d."postalCode",
+            'profilePicture', d."profilePicture",
+            'isActive', d."isActive",
+            'clinic', clinics
+        )
+    ) INTO doctors_data
+    FROM (
+        SELECT d.*,
+            (
+                SELECT jsonb_build_object(
+                    'clinicId', c."clinicId",
+                    'clinicName', c."name",
+                    'address', c."address",
+                    'city', c."city",
+                    'state', c."state",
+                    'country', c."country",
+                    'postalCode', c."postalCode",
+                    'contact', c."contact",
+                    'email', c."email",
+                    'website', c."website",
+                    'clinicPicture', c."clinicPicture"
+                )
+                FROM "DoctorClinic" dc
+                LEFT JOIN "Clinics" c ON dc."clinicId" = c."clinicId"
+                WHERE dc."doctorId" = d."doctorId"
+                LIMIT 1  -- Ensure only one clinic is returned
+            ) AS clinics
+        FROM "Doctors" d
+    ) d;
+
+    RETURN doctors_data;
+END;
+$$ LANGUAGE plpgsql;

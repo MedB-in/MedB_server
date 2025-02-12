@@ -1,14 +1,17 @@
-CREATE OR REPLACE FUNCTION getClinicDetails(p_clinicId INT)
-RETURNS JSON AS $$
+CREATE OR REPLACE FUNCTION public.getclinicdetails(p_clinicid integer)
+ RETURNS json
+ LANGUAGE plpgsql
+AS $function$
 DECLARE
     clinic_data JSON;
 BEGIN
     -- Fetch clinic details with nested doctors and slots
     SELECT jsonb_build_object(
         'clinicId', c."clinicId",
-        'clinicName', c."name",
+        'name', c."name",
         'address', c."address",
         'city', c."city",
+        'district', c."district",
         'state', c."state",
         'country', c."country",
         'postalCode', c."postalCode",
@@ -16,17 +19,31 @@ BEGIN
         'email', c."email",
         'website', c."website",
         'clinicPicture', c."clinicPicture",
+        'isActive', c."isActive",
+        'openingHours', c."openingHours",
         'doctors', COALESCE(
             jsonb_agg(
                 jsonb_build_object(
                     'doctorId', d."doctorId",
-                    'doctorName', CONCAT(d."firstName", ' ', COALESCE(d."middleName", ''), ' ', d."lastName"),
+                    'firstName', d."firstName",
+                    'middleName', d."middleName",
+                    'lastName', d."lastName",
+                    'registration', d."registration",
+                    'gender', d."gender",
+                    'address', d."address",
+                    'city', d."city",
+                    'district', d."district",
+                    'state', d."state",
+                    'country', d."country",
+                    'postalCode', d."postalCode",
                     'speciality', d."speciality",
                     'experience', d."experience",
                     'qualifications', d."qualifications",
                     'phone', d."phone",
                     'email', d."email",
                     'profilePicture', d."profilePicture",
+                    'isActiveDoctor', d."isActive",  -- Doctor's isActive status
+                    'isActiveDoctorClinic', dc."isActive",  -- DoctorClinic's isActive status
                     'slots', (
                         SELECT COALESCE(jsonb_agg(
                             jsonb_build_object(
@@ -51,4 +68,4 @@ BEGIN
 
     RETURN clinic_data;
 END;
-$$ LANGUAGE plpgsql;
+$function$
