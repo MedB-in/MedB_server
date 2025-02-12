@@ -8,6 +8,11 @@ exports.getAllClinics = catchAsync(async (req, res, next) => {
     return res.status(200).json({ clinics });
 });
 
+// Controller to get Clinic List
+exports.getClinicList = catchAsync(async (req, res, next) => {
+    const clinics = await clinicServices.getClinicListService();
+    return res.status(200).json({ clinics });
+});
 
 // Controller to add a Clinic
 exports.addClinic = catchAsync(async (req, res, next) => {

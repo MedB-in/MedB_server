@@ -13,6 +13,19 @@ exports.getAllClinicsService = async () => {
     return clinics.map(clinic => clinic.dataValues);
 };
 
+// Service function to get Clinic List
+exports.getClinicListService = async () => {
+    const clinics = await Clinic.findAll({
+        attributes: ['clinicId', 'name'],
+    });
+
+    if (!clinics || clinics.length === 0) {
+        throw new AppError({ statusCode: 404, message: 'No clinics found' });
+    }
+
+    return clinics.map(clinic => clinic.dataValues);
+};
+
 
 // Service function to add a Clinic
 exports.addClinicService = async ({
@@ -92,17 +105,18 @@ exports.editClinicService = async (clinicId, updatedData) => {
     };
 };
 
+
 //Service function to get a single Clinic details with doctors
 exports.getClinicWithDoctors = async (clinicId) => {
-try {
-    const query = `SELECT * FROM getClinicDetails(:id);`;
+    try {
+        const query = `SELECT * FROM getClinicDetails(:id);`;
 
-    const [data] = await sequelize.query(query, {
-        replacements: { id: clinicId },
-        type: sequelize.QueryTypes.SELECT,
-    });
-    return data.getclinicdetails;
-} catch (error) {
-    throw new AppError({ statusCode: 500, message: "Error fetching clinic data", error });
-}
+        const [data] = await sequelize.query(query, {
+            replacements: { id: clinicId },
+            type: sequelize.QueryTypes.SELECT,
+        });
+        return data.getclinicdetails;
+    } catch (error) {
+        throw new AppError({ statusCode: 500, message: "Error fetching clinic data", error });
+    }
 };

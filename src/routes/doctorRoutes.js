@@ -9,6 +9,14 @@ router
     .post(userController.addDoctor);
 
 router
+    .route('/list')
+    .get(userController.getDoctorsList);
+
+router
+    .route('/doctorClinic/:clinicId')
+    .post(userController.addDoctorClinic);
+
+router
     .route('/:id')
     .put(userController.editDoctor);
 
