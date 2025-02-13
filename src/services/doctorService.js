@@ -141,7 +141,7 @@ exports.editDoctor = async (doctorId, data) => {
     const clinicId = data.clinicId;
     const transaction = await sequelize.transaction();
 
-    if (!data.firstName || !data.lastName || !dataregistration || !data.email || !data.phone || !data.speciality || !data.experience || !data.gender || !clinicId) {
+    if (!data.firstName || !data.lastName || !data.registration || !data.email || !data.phone || !data.speciality || !data.experience || !data.gender || !clinicId) {
         throw new AppError({ statusCode: 400, message: "Missing required fields for doctor" });
     }
     
