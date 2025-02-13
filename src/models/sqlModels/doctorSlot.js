@@ -27,6 +27,10 @@ const DoctorSlot = sequelize.define("DoctorSlot", {
             key: "clinicId",
         },
     },
+    day: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+    },
     timingFrom: {
         type: DataTypes.TIME,
         allowNull: false,

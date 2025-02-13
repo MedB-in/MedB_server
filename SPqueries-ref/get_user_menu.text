@@ -1,0 +1,54 @@
+CREATE OR REPLACE FUNCTION getClinicDetailsWithDoctorDetails(
+    p_clinicId INT,
+    p_doctorId INT
+)
+RETURNS JSONB AS $$
+DECLARE
+    result JSONB;
+BEGIN
+    SELECT jsonb_build_object(
+        'doctor', (
+            SELECT jsonb_build_object(
+                'doctorId', d."doctorId",
+                'firstName', d."firstName",
+                'middleName', d."middleName",
+                'lastName', d."lastName",
+                'speciality', d."speciality",
+                'registration', d."registration",
+                'experience', d."experience",
+                'gender', d."gender",
+                'qualifications', d."qualifications",
+                'phone', d."phone",
+                'email', d."email",
+                'address', d."address",
+                'city', d."city",
+                'district', d."district",
+                'state', d."state",
+                'country', d."country",
+                'postalCode', d."postalCode",
+                'profilePicture', d."profilePicture",
+                'isActive', d."isActive"
+            ) 
+            FROM "Doctors" d WHERE d."doctorId" = p_doctorId
+        ),
+        'clinic', (
+            SELECT jsonb_build_object(
+                'clinicId', c."clinicId",
+                'clinicName', c."name",
+                'address', c."address",
+                'city', c."city",
+                'state', c."state",
+                'country', c."country",
+                'postalCode', c."postalCode",
+                'contact', c."contact",
+                'email', c."email",
+                'website', c."website",
+                'clinicPicture', c."clinicPicture"
+            ) 
+            FROM "Clinics" c WHERE c."clinicId" = p_clinicId
+        )
+    ) INTO result;
+    
+    RETURN result;
+END;
+$$ LANGUAGE plpgsql;

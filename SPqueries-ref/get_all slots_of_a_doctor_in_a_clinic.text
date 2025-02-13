@@ -1,0 +1,31 @@
+CREATE OR REPLACE FUNCTION getDoctorSlot(
+    p_clinicId INT,
+    p_doctorId INT
+)
+RETURNS JSONB AS $$
+DECLARE
+    result JSONB;
+BEGIN
+    SELECT jsonb_agg(
+        jsonb_build_object(
+            'doctorSlotId', ds."doctorSlotId",
+            'doctorId', ds."doctorId",
+            'clinicId', ds."clinicId",
+            'day', ds."day",
+            'timingFrom', ds."timingFrom",
+            'timingTo', ds."timingTo",
+            'slotGap', ds."slotGap",
+            'createdOn', ds."createdOn",
+            'modifiedOn', ds."modifiedOn",
+            'createdBy', ds."createdBy",
+            'modifiedBy', ds."modifiedBy"
+        )
+    ) INTO result
+    FROM "DoctorSlots" ds
+    WHERE ds."clinicId" = p_clinicId
+      AND ds."doctorId" = p_doctorId;
+    
+    -- Return an empty JSON array if no slots are found
+    RETURN COALESCE(result, '[]'::JSONB);
+END;
+$$ LANGUAGE plpgsql;

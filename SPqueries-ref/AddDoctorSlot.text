@@ -1,0 +1,50 @@
+CREATE OR REPLACE FUNCTION AddDoctorSlot(
+    p_clinicId INT,
+    p_doctorId INT,
+    p_day INT,
+    p_timingFrom TIME,
+    p_timingTo TIME,
+    p_slotGap INT,
+    p_createdBy INT
+) RETURNS JSON AS $$
+DECLARE
+    overlap_slots JSON;
+    new_slot_id INT;
+BEGIN
+    -- Check for overlapping slots
+    SELECT json_agg(row_to_json(t))
+    INTO overlap_slots
+    FROM (
+        SELECT "doctorSlotId", "clinicId", "doctorId", "day", "timingFrom", "timingTo", "slotGap"
+        FROM "DoctorSlots"
+        WHERE "doctorId" = p_doctorId
+          AND "day" = p_day
+          AND (
+              (p_timingFrom >= "timingFrom" AND p_timingFrom < "timingTo") -- Overlap case 1
+              OR (p_timingTo > "timingFrom" AND p_timingTo <= "timingTo") -- Overlap case 2
+              OR (p_timingFrom <= "timingFrom" AND p_timingTo >= "timingTo") -- Overlap case 3
+          )
+    ) t;
+
+    -- If overlaps exist, return overlapping slots
+    IF overlap_slots IS NOT NULL THEN
+        RETURN json_build_object(
+            'status', 'error',
+            'message', 'Overlapping slot(s) found. Slot cannot be added.',
+            'overlapping_slots', overlap_slots
+        );
+    END IF;
+
+    -- Insert new slot if no overlaps
+    INSERT INTO "DoctorSlots" ("clinicId", "doctorId", "day", "timingFrom", "timingTo", "slotGap", "createdBy", "createdOn")
+    VALUES (p_clinicId, p_doctorId, p_day, p_timingFrom, p_timingTo, p_slotGap, p_createdBy, NOW())
+    RETURNING "doctorSlotId" INTO new_slot_id;
+
+    -- Return success response
+    RETURN json_build_object(
+        'status', 'success',
+        'message', 'Slot added successfully.',
+        'doctorSlotId', new_slot_id
+    );
+END;
+$$ LANGUAGE plpgsql;
