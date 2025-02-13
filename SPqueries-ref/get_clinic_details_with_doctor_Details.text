@@ -48,6 +48,7 @@ BEGIN
                         SELECT COALESCE(jsonb_agg(
                             jsonb_build_object(
                                 'slotId', ds."doctorSlotId",
+                                'day', ds."day",
                                 'timingFrom', ds."timingFrom",
                                 'timingTo', ds."timingTo",
                                 'slotGap', ds."slotGap"

@@ -6,14 +6,26 @@ const router = Router();
 router
     .route('/')
     .get(clinicController.getAllClinics)
-    .post(clinicController.addClinic);
+    .post(clinicController.addClinic)
 router
     .route('/list')
     .get(clinicController.getClinicList)
 
 router
+    .route('/doctorClinic/:clinicId/:doctorId')
+    .get(clinicController.getDoctorClinic)
+
+router
+    .route('/slots/:clinicId/:doctorId')
+    .get(clinicController.getSlots)
+
+router
+    .route('/slots')
+    .post(clinicController.addSlots)
+
+router
     .route('/:id')
     .get(clinicController.getClinicDetails)
-    .put(clinicController.editClinic);
+    .put(clinicController.editClinic)
 
 module.exports = router;

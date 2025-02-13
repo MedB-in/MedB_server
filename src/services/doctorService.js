@@ -22,13 +22,13 @@ exports.getDoctorsList = async () => {
     try {
         const doctors = await Doctor.findAll({
             attributes: ["doctorId", "firstName", "middleName", "lastName", "speciality", "qualifications"],
-            // where: { isActive: true }, // Fetching only active doctors
+            where: { isActive: true }, // Fetching only active doctors
             order: [["firstName", "ASC"]],
         });
 
-        return doctors.map(doctor => doctor.dataValues); 
+        return doctors.map(doctor => doctor.dataValues);
     } catch (error) {
-        console.error("Error fetching doctor list:", error); 
+        console.error("Error fetching doctor list:", error);
         throw new AppError({ statusCode: 500, message: "Error fetching doctor list", error });
     }
 };
@@ -141,6 +141,10 @@ exports.editDoctor = async (doctorId, data) => {
     const clinicId = data.clinicId;
     const transaction = await sequelize.transaction();
 
+    if (!data.firstName || !data.lastName || !dataregistration || !data.email || !data.phone || !data.speciality || !data.experience || !data.gender || !clinicId) {
+        throw new AppError({ statusCode: 400, message: "Missing required fields for doctor" });
+    }
+    
     try {
         const doctor = await Doctor.findByPk(doctorId, { transaction });
         if (!doctor) {

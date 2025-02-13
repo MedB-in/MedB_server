@@ -8,11 +8,62 @@ exports.getAllClinics = catchAsync(async (req, res, next) => {
     return res.status(200).json({ clinics });
 });
 
+
 // Controller to get Clinic List
 exports.getClinicList = catchAsync(async (req, res, next) => {
     const clinics = await clinicServices.getClinicListService();
     return res.status(200).json({ clinics });
 });
+
+
+//Controller to get a single Clinic details with doctors
+exports.getClinicDetails = catchAsync(async (req, res, next) => {
+    const { id } = req.params;
+    const data = await clinicServices.getClinicWithDoctors(id);
+    return res.status(200).json({ data });
+});
+
+
+//Controller to get a single Doctor details and corresponding Clinic details
+exports.getDoctorClinic = catchAsync(async (req, res, next) => {
+    const { clinicId, doctorId } = req.params;
+    const data = await clinicServices.getDoctorWithClinic(clinicId, doctorId);
+    return res.status(200).json({ data });
+});
+
+
+//Controller to get slots for a Doctor in a clinic
+exports.getSlots = catchAsync(async (req, res, next) => {
+    const { clinicId, doctorId } = req.params;
+    const data = await clinicServices.getSlots(clinicId, doctorId);
+    return res.status(200).json({ data });
+
+});
+
+exports.addSlots = catchAsync(async (req, res, next) => {
+    const slotData = req.body;
+    const createdBy = req.user.userId;
+
+    const response = await clinicServices.addSlots(createdBy, slotData);
+
+    // If overlapping slots exist, send a 400 status with details
+    if (response.status === "error") {
+        return res.status(400).json({
+            status: "error",
+            message: response.message,
+            overlappingSlots: response.overlappingSlots || [],
+        });
+    }
+
+    // If slot is successfully added, send a 200 status
+    return res.status(200).json({
+        status: "success",
+        message: response.message,
+        doctorSlotId: response.doctorSlotId,
+    });
+});
+
+
 
 // Controller to add a Clinic
 exports.addClinic = catchAsync(async (req, res, next) => {
@@ -35,7 +86,7 @@ exports.addClinic = catchAsync(async (req, res, next) => {
 
     const createdBy = req.user.userId;
 
-    if (!name || !location || !address || !city || !state || !country || !postalCode || !contact || !createdBy) {
+    if (!name || !location || !address || !district || !state || !country || !postalCode || !contact || !createdBy) {
         throw new AppError({ statusCode: 400, message: 'Missing required fields for clinic creation' });
     }
 
@@ -92,6 +143,10 @@ exports.editClinic = catchAsync(async (req, res, next) => {
         throw new AppError({ statusCode: 400, message: 'Clinic ID is required' });
     }
 
+    if (!name || !location || !address || !district || !state || !country || !postalCode || !contact || !modifiedBy) {
+        throw new AppError({ statusCode: 400, message: 'Missing required fields for clinic creation' });
+    }
+
     const result = await clinicServices.editClinicService(id, {
         name,
         location,
@@ -116,10 +171,3 @@ exports.editClinic = catchAsync(async (req, res, next) => {
         data: result.data,
     });
 });
-
-//Controller to get a single Clinic details with doctors
-exports.getClinicDetails = catchAsync(async (req, res, next) => {
-    const { id } = req.params;
-    const data = await clinicServices.getClinicWithDoctors(id);
-    return res.status(200).json({ data });
-})

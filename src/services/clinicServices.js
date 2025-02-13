@@ -26,6 +26,79 @@ exports.getClinicListService = async () => {
     return clinics.map(clinic => clinic.dataValues);
 };
 
+//Service function to get a single Doctor details and corresponding Clinic details
+exports.getDoctorWithClinic = async (clinicId, doctorId) => {
+
+    try {
+        const query = `SELECT getClinicDetailsWithDoctorDetails(:clinicId, :doctorId);`;
+
+        const [data] = await sequelize.query(query, {
+            replacements: { clinicId, doctorId },
+            type: sequelize.QueryTypes.SELECT,
+        });
+
+        return data.getclinicdetailswithdoctordetails;
+    } catch (error) {
+        throw new AppError({ statusCode: 500, message: "Error fetching clinic data", error });
+    }
+};
+
+//Service function to get slots of a doctor
+exports.getSlots = async (clinicId, doctorId) => {
+    try {
+        const query = `SELECT getDoctorSlot(:clinicId, :doctorId)`;
+
+        const [data] = await sequelize.query(query, {
+            replacements: { clinicId, doctorId },
+            type: sequelize.QueryTypes.SELECT,
+        });
+
+        return data.getdoctorslot;
+    } catch (error) {
+        throw new AppError({ statusCode: 500, message: "Error fetching slot data", error });
+    }
+};
+
+//Service function to add slots for a Doctor in a clinic
+exports.addSlots = async (createdBy, slotData) => {
+    const { clinicId, doctorId, day, timingFrom, timingTo, slotGap } = slotData;
+
+    try {
+        const result = await sequelize.query(
+            `SELECT AddDoctorSlot(:clinicId, :doctorId, :day, :timingFrom, :timingTo, :slotGap, :createdBy) AS response`,
+            {
+                replacements: { clinicId, doctorId, day, timingFrom, timingTo, slotGap, createdBy },
+                type: sequelize.QueryTypes.SELECT,
+            }
+        );
+
+        if (!result || result.length === 0 || !result[0].response) {
+            throw new AppError({ statusCode: 500, message: "No response from database function." });
+        }
+        let response = result[0].response;
+        if (typeof response === "string") {
+            try {
+                response = JSON.parse(response);
+            } catch (parseError) {
+                throw new AppError({ statusCode: 500, message: "Invalid JSON response from database.", error: parseError });
+            }
+        }
+        if (response.status === "error") {
+            return {
+                status: "error",
+                message: response.message,
+                overlappingSlots: response.overlapping_slots || [],
+            };
+        }
+        return response;
+    } catch (error) {
+        throw new AppError({ statusCode: 500, message: "Error adding slots", error });
+    }
+};
+
+
+
+
 
 // Service function to add a Clinic
 exports.addClinicService = async ({
