@@ -1,0 +1,66 @@
+CREATE OR REPLACE FUNCTION EditDoctorSlot(
+    p_clinicId INT,
+    p_doctorId INT,
+    p_slotId INT,
+    p_day INT,
+    p_timingFrom TIME,
+    p_timingTo TIME,
+    p_slotGap INT,
+    p_modifiedBy INT
+) RETURNS JSON AS $$
+DECLARE
+    overlap_slots JSON;
+    updated_slot RECORD;
+BEGIN
+    -- Check for overlapping slots (excluding the current slot)
+    SELECT json_agg(row_to_json(t))
+    INTO overlap_slots
+    FROM (
+        SELECT "doctorSlotId", "clinicId", "doctorId", "day", "timingFrom", "timingTo", "slotGap"
+        FROM "DoctorSlots"
+        WHERE "doctorId" = p_doctorId
+          AND "day" = p_day
+          AND "doctorSlotId" != p_slotId  -- Exclude the current slot
+          AND (
+              (p_timingFrom >= "timingFrom" AND p_timingFrom < "timingTo") -- Overlap case 1
+              OR (p_timingTo > "timingFrom" AND p_timingTo <= "timingTo") -- Overlap case 2
+              OR (p_timingFrom <= "timingFrom" AND p_timingTo >= "timingTo") -- Overlap case 3
+          )
+    ) t;
+
+    -- If overlaps exist, return overlapping slots
+    IF overlap_slots IS NOT NULL THEN
+        RETURN json_build_object(
+            'status', 'error',
+            'message', 'Overlapping slot(s) found. Slot cannot be updated.',
+            'overlapping_slots', overlap_slots
+        );
+    END IF;
+
+    -- Update the slot if no overlaps
+    UPDATE "DoctorSlots"
+    SET "day" = p_day,
+        "timingFrom" = p_timingFrom,
+        "timingTo" = p_timingTo,
+        "slotGap" = p_slotGap,
+        "modifiedBy" = p_modifiedBy,
+        "modifiedOn" = NOW()
+    WHERE "doctorSlotId" = p_slotId
+    RETURNING * INTO updated_slot;
+
+    -- Ensure a valid JSON response
+    IF updated_slot IS NULL THEN
+        RETURN json_build_object(
+            'status', 'error',
+            'message', 'Failed to update slot. Slot may not exist.'
+        );
+    END IF;
+
+    -- Return success response with updated slot details
+    RETURN json_build_object(
+        'status', 'success',
+        'message', 'Slot updated successfully.',
+        'updated_slot', row_to_json(updated_slot)
+    );
+END;
+$$ LANGUAGE plpgsql;

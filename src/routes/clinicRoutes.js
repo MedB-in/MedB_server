@@ -7,6 +7,7 @@ router
     .route('/')
     .get(clinicController.getAllClinics)
     .post(clinicController.addClinic)
+    
 router
     .route('/list')
     .get(clinicController.getClinicList)
@@ -22,6 +23,10 @@ router
 router
     .route('/slots')
     .post(clinicController.addSlots)
+
+router
+    .route('/slots/:slotId')
+    .put(clinicController.editSlots)
 
 router
     .route('/:id')
