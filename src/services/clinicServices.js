@@ -97,6 +97,45 @@ exports.addSlots = async (createdBy, slotData) => {
 };
 
 
+exports.editSlots = async (slotId, modifiedBy, slotData) => {
+    const { clinicId, doctorId, day, timingFrom, timingTo, slotGap } = slotData;
+
+    try {
+        const result = await sequelize.query(
+            `SELECT EditDoctorSlot(:clinicId, :doctorId, :slotId, :day, :timingFrom, :timingTo, :slotGap, :modifiedBy) AS response`,
+            {
+                replacements: { clinicId, doctorId, slotId, day, timingFrom, timingTo, slotGap, modifiedBy },
+                type: sequelize.QueryTypes.SELECT,
+            }
+        );
+
+        if (!result || result.length === 0 || !result[0].response) {
+            throw new AppError({ statusCode: 500, message: "No response from database function." });
+        }
+
+        let response = result[0].response;
+
+        if (typeof response === "string") {
+            try {
+                response = JSON.parse(response);
+            } catch (parseError) {
+                throw new AppError({ statusCode: 500, message: "Invalid JSON response from database.", error: parseError });
+            }
+        }
+
+        if (response.status === "error") {
+            return {
+                status: "error",
+                message: response.message,
+                overlappingSlots: response.overlapping_slots || [],
+            };
+        }
+
+        return response;
+    } catch (error) {
+        throw new AppError({ statusCode: 500, message: "Error editing slots", error });
+    }
+};
 
 
 

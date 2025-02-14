@@ -40,13 +40,13 @@ exports.getSlots = catchAsync(async (req, res, next) => {
 
 });
 
+// Controller to add slots for a Doctor in a clinic 
 exports.addSlots = catchAsync(async (req, res, next) => {
     const slotData = req.body;
     const createdBy = req.user.userId;
 
     const response = await clinicServices.addSlots(createdBy, slotData);
 
-    // If overlapping slots exist, send a 400 status with details
     if (response.status === "error") {
         return res.status(400).json({
             status: "error",
@@ -55,7 +55,6 @@ exports.addSlots = catchAsync(async (req, res, next) => {
         });
     }
 
-    // If slot is successfully added, send a 200 status
     return res.status(200).json({
         status: "success",
         message: response.message,
@@ -63,6 +62,29 @@ exports.addSlots = catchAsync(async (req, res, next) => {
     });
 });
 
+
+//Controller to edit slots for a Doctor in a clinic
+exports.editSlots = catchAsync(async (req, res, next) => {
+    const { slotId } = req.params;
+
+    const slotData = req.body;
+    const modifiedBy = req.user.userId;
+
+    const response = await clinicServices.editSlots(slotId, modifiedBy, slotData);
+
+    if (response.status === "error") {
+        return res.status(400).json({
+            status: "error",
+            message: response.message,
+            overlappingSlots: response.overlappingSlots || [],
+        });
+    }
+
+    return res.status(200).json({
+        status: "success",
+        message: response.message,
+    });
+});
 
 
 // Controller to add a Clinic
