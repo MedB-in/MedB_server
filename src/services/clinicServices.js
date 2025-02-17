@@ -2,6 +2,7 @@ const { sequelize } = require('../config/postgresConnection');
 const AppError = require("../utils/appError");
 const Clinic = require('../models/sqlModels/clinicsModel');
 const DoctorSlot = require('../models/sqlModels/doctorSlot');
+const DoctorClinic = require('../models/sqlModels/doctorClinicModel');
 
 // Service function to get all Clinics
 exports.getAllClinicsService = async () => {
@@ -42,6 +43,23 @@ exports.getDoctorWithClinic = async (clinicId, doctorId) => {
         throw new AppError({ statusCode: 500, message: "Error fetching clinic data", error });
     }
 };
+
+//Service fundtion to edit the status of a doctor in a clinic
+exports.editDoctorClinicStatus = async (doctorId, clinicId, isActive) => {
+    console.log(doctorId, clinicId, isActive);
+    
+    try {
+        const result = await DoctorClinic.update({ isActive }, { where: { doctorId, clinicId } });
+        console.log(result[0]);
+        
+        if (result[0] === 0) {
+            throw new AppError({ statusCode: 404, message: "Doctor not found in clinic" });
+        }
+        return result;
+    } catch (error) {
+        throw new AppError({ statusCode: 500, message: "Error updating doctor status", error });
+    }
+}
 
 //Service function to get slots of a doctor
 exports.getSlots = async (clinicId, doctorId) => {

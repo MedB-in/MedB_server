@@ -31,6 +31,15 @@ exports.getDoctorClinic = catchAsync(async (req, res, next) => {
     return res.status(200).json({ data });
 });
 
+//Controlle to set status of a Doctor in a clinic
+exports.editDoctorClinicStatus = catchAsync(async (req, res, next) => {
+    const { doctorId, clinicId } = req.params;
+    const { isActive } = req.body;
+    await clinicServices.editDoctorClinicStatus(doctorId, clinicId, isActive);
+    return res.status(200).json({
+        message: "Status updated successfully"
+    });
+});
 
 //Controller to get slots for a Doctor in a clinic
 exports.getSlots = catchAsync(async (req, res, next) => {
