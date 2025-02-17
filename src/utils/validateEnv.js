@@ -23,4 +23,7 @@ module.exports = cleanEnv(process.env, {
   NUMBER_OF_PROXIES: str(),
 
   ERROR_LOG_EXPIRATION: str(),
+
+  EMAIL: str(),
+  EMAILPASS: str(),
 });

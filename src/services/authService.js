@@ -5,13 +5,15 @@ const User = require("../models/sqlModels/userModel");
 const Token = require("../models/mongoDBModels/tokenModel");
 const env = require("../utils/validateEnv");
 const { sequelize } = require('../config/postgresConnection');
+const { sendVerificationEmail } = require("./emailServices");
 
 // Generate JWT function
 const generateJWT = (payload, secret, expirationTime) => {
     return jwt.sign(payload, secret, { expiresIn: expirationTime });
 };
 
-// Service for user login
+
+// Service function for user login
 exports.loginUser = async (email, password) => {
     if (!email || !password) {
         throw new AppError({ statusCode: 400, message: "Credentials required" });
@@ -27,7 +29,6 @@ exports.loginUser = async (email, password) => {
         throw new AppError({ statusCode: 401, message: "Invalid Password" });
     }
 
-    //Calling stored procedure
     const query = `SELECT get_user_menu(:userId);`;
 
     const [data] = await sequelize.query(query, {
@@ -65,6 +66,59 @@ exports.loginUser = async (email, password) => {
 
     return { accessToken, refreshToken, userDetails, menuData };
 };
+
+
+// Service Function for user registration
+exports.registerUser = async (firstName, middleName, lastName, contactNo, email, password, confirmPassword) => {
+    if (!firstName || !email || !contactNo || !password || !confirmPassword) {
+        throw new AppError({ statusCode: 400, message: "Credentials required" });
+    }
+
+    if (password !== confirmPassword) {
+        throw new AppError({ statusCode: 400, message: "Passwords do not match" });
+    }
+
+    const existingUser = await User.findOne({ where: { email } });
+
+    if (existingUser) {
+        throw new AppError({ statusCode: 409, message: "Email already registered" });
+    }
+
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+
+    const user = await User.create({
+        firstName,
+        middleName,
+        lastName,
+        email,
+        contactNo,
+        password: hashedPassword,
+        isVerified: false,
+    });
+
+    await sendVerificationEmail(firstName, middleName, lastName, user.userId, email, user.loginKey);
+
+    return;
+};
+
+
+exports.verifyEmail = async (loginKey, userId) => {
+    const [updated] = await User.update(
+        { isVerified: true },
+        {
+            where: {
+                loginKey,
+                userId,
+            }
+        }
+    );
+
+    if (!updated) {
+        throw new AppError({ statusCode: 404, message: "User not found" });
+    }
+};
+
 
 // Service for refreshing the access token
 exports.refreshAccessToken = async (refreshToken) => {
