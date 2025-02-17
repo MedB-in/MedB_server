@@ -17,6 +17,10 @@ router
     .get(clinicController.getDoctorClinic)
 
 router
+    .route('/doctorClinic/:clinicId/:doctorId')
+    .put(clinicController.editDoctorClinicStatus)
+
+router
     .route('/slots/:clinicId/:doctorId')
     .get(clinicController.getSlots)
 
