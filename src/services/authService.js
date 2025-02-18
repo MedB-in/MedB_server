@@ -2,6 +2,7 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const AppError = require("../utils/appError");
 const User = require("../models/sqlModels/userModel");
+const UserSubscription = require("../models/sqlModels/subscriptionModel");
 const Token = require("../models/mongoDBModels/tokenModel");
 const env = require("../utils/validateEnv");
 const { sequelize } = require('../config/postgresConnection');
@@ -18,25 +19,37 @@ exports.loginUser = async (email, password) => {
     if (!email || !password) {
         throw new AppError({ statusCode: 400, message: "Credentials required" });
     }
+    
+    // needs optimisation-->create seperate sp for this later
 
     const user = await User.findOne({ where: { email } });
+
     if (!user) {
         throw new AppError({ statusCode: 401, message: "Invalid User" });
     }
+
+    if (!user.isVerified) {
+        throw new AppError({ statusCode: 401, message: "User is not verified" });
+    }
+
+    if (!user.isActive) {
+        throw new AppError({ statusCode: 401, message: "User is not active" });
+    }
+
     const userId = user.userId;
     const isValidPassword = await bcrypt.compare(password, user.password);
     if (!isValidPassword) {
         throw new AppError({ statusCode: 401, message: "Invalid Password" });
     }
 
-    const query = `SELECT get_user_menu(:userId);`;
+    const query = `SELECT get_user_menu_subscribed(:userId);`;
 
     const [data] = await sequelize.query(query, {
         replacements: { userId },
         type: sequelize.QueryTypes.SELECT,
     });
 
-    const menuData = data.get_user_menu
+    const menuData = data.get_user_menu_subscribed;
 
     const accessToken = generateJWT(
         { userId: user.userId },
@@ -70,6 +83,9 @@ exports.loginUser = async (email, password) => {
 
 // Service Function for user registration
 exports.registerUser = async (firstName, middleName, lastName, contactNo, email, password, confirmPassword) => {
+
+    // needs optimisation-->create seperate sp for this later
+
     if (!firstName || !email || !contactNo || !password || !confirmPassword) {
         throw new AppError({ statusCode: 400, message: "Credentials required" });
     }
@@ -94,10 +110,22 @@ exports.registerUser = async (firstName, middleName, lastName, contactNo, email,
         email,
         contactNo,
         password: hashedPassword,
+        isActive: false,
+        lastLoginOn: new Date(),
         isVerified: false,
     });
 
     await sendVerificationEmail(firstName, middleName, lastName, user.userId, email, user.loginKey);
+
+    await UserSubscription.create({
+        userId: user.userId,
+        productId: 2, // patient
+        startOn: new Date(),
+        endOn: new Date(new Date().setFullYear(new Date().getFullYear() + 1)), // One year for now. hvae to change accordingly
+        isPaid: false,
+        createdBy: user.userId,
+        createdOn: new Date(),
+    });
 
     return;
 };
@@ -105,7 +133,7 @@ exports.registerUser = async (firstName, middleName, lastName, contactNo, email,
 
 exports.verifyEmail = async (loginKey, userId) => {
     const [updated] = await User.update(
-        { isVerified: true },
+        { isVerified: true, isActive: true },
         {
             where: {
                 loginKey,

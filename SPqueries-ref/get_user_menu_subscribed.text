@@ -1,0 +1,85 @@
+CREATE OR REPLACE FUNCTION public.get_user_menu_subscribed(user_id bigint)
+ RETURNS json
+ LANGUAGE plpgsql
+AS $function$
+DECLARE 
+    result JSON;
+    resolved_product_ids INT[];
+    user_menu_ids INT[];
+    subscription_menu_ids INT[];
+    combined_menu_ids INT[];
+BEGIN
+    -- Check if the user has any active subscriptions
+    SELECT array_agg(us."productId") INTO resolved_product_ids
+    FROM "UserSubscription" us
+    WHERE us."userId" = user_id AND us."endOn" > NOW();
+
+    -- If no active subscription, return an empty JSON array
+    IF resolved_product_ids IS NULL THEN
+        RETURN '[]'::JSON;
+    END IF;
+
+    -- Get menu IDs from ProductMenu for the active subscriptions
+    SELECT array_agg(DISTINCT pm."menuId") INTO subscription_menu_ids
+    FROM "ProductMenu" pm
+    WHERE pm."productId" = ANY(resolved_product_ids);
+
+    -- Get menu IDs from UserRights (existing logic)
+    SELECT array_agg(DISTINCT ur."menuId") INTO user_menu_ids
+    FROM "UserRights" ur
+    WHERE ur."userId" = user_id;
+
+    -- Merge both sets of menu IDs while ensuring distinct values
+    SELECT array_agg(DISTINCT menu_id) INTO combined_menu_ids
+    FROM (
+        SELECT unnest(subscription_menu_ids)
+        UNION
+        SELECT unnest(user_menu_ids)
+    ) AS distinct_menus(menu_id);
+
+    -- Fetch the module and menu structure based on the combined menu IDs
+    SELECT json_agg(modules_with_menus) INTO result
+    FROM (
+        SELECT 
+            m."moduleId",
+            m."moduleName",
+            m."sortOrder",
+            m."moduleIcon",
+            (
+                SELECT json_agg(menus_with_rights)
+                FROM (
+                    SELECT 
+                        me."menuId",
+                        me."menuName",
+                        me."sortOrder",
+                        me."menuIcon",
+                        me."actionName",
+                        me."controllerName",
+                        COALESCE(( 
+                            SELECT jsonb_build_object(
+                                'viewAllowed', ur."viewAllowed",
+                                'editAllowed', ur."editAllowed",
+                                'createAllowed', ur."createAllowed",
+                                'deleteAllowed', ur."deleteAllowed"
+                            )
+                            FROM "UserRights" ur
+                            WHERE ur."userId" = user_id AND ur."menuId" = me."menuId"
+                        ), '{}'::JSONB) AS rights
+                    FROM "Menu" me
+                    WHERE me."moduleId" = m."moduleId" 
+                    AND me."menuId" = ANY(combined_menu_ids) -- Filter by combined menu IDs
+                    ORDER BY me."sortOrder"
+                ) AS menus_with_rights
+            ) AS menus
+        FROM "Module" m
+        WHERE m."moduleId" IN (
+            SELECT DISTINCT me."moduleId"
+            FROM "Menu" me
+            WHERE me."menuId" = ANY(combined_menu_ids)
+        )
+        ORDER BY m."sortOrder"
+    ) AS modules_with_menus;
+
+    RETURN result;
+END;
+$function$;
