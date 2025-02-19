@@ -75,9 +75,20 @@ exports.loginUser = async (email, password) => {
 
     const userDetails = {
         userId: user.userId,
-        name: user.name,
+        firstName: user.firstName,
+        middleName: user.middleName,
+        lastName: user.lastName,
+        designation: user.designation,
+        contactNo: user.contactNo,
+        address: user.address,
+        city: user.city,
+        district: user.district,
+        state: user.state,
+        country: user.country,
+        postalCode: user.postalCode,
+        profilePicture: user.profilePicture,
         email: user.email,
-        loginKey: user.loginKey,
+        // loginKey: user.loginKey,
     }
 
     return { accessToken, refreshToken, userDetails, menuData };
