@@ -23,6 +23,7 @@ const controlPanelRoutes = require('./routes/controlPanelRoutes');
 const productRoutes = require('./routes/productRoutes');
 const clinicRoutes = require('./routes/clinicRoutes');
 const doctorRoutes = require('./routes/doctorRoutes');
+const subscriptionRoutes = require('./routes/subscriptionRoutes');
 
 const app = express();
 
@@ -61,6 +62,7 @@ app.use('/api/controlPanel', controlPanelRoutes);
 app.use('/api/product', productRoutes);
 app.use('/api/clinic', clinicRoutes);
 app.use('/api/doctor', doctorRoutes);
+app.use('/api/subscription', subscriptionRoutes);
 // app.use('/api/patient', patientController);
 
 // Error Handler
