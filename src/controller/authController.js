@@ -29,6 +29,21 @@ exports.register = catchAsync(async (req, res, next) => {
     }
 });
 
+// Forgot Password Controller
+exports.forgotPassword = catchAsync(async (req, res, next) => {
+    const { email } = req.params;
+
+    await authService.forgotPassword(email);
+    return res.status(200).json({ message: "Password reset code sent successfully" });
+});
+
+// Reset Password Controller
+exports.resetPassword = catchAsync(async (req, res, next) => {
+    const { email,code, password, confirmPassword } = req.body;
+    await authService.resetPassword(email, code, password, confirmPassword);
+    return res.status(200).json({ message: "Password reset successfully" });
+});
+
 
 //Verify Email Controller
 exports.verifyEmail = catchAsync(async (req, res, next) => {

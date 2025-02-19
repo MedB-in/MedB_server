@@ -12,6 +12,14 @@ router
     .get(authController.verifyEmail);
 
 router
+    .route('/forgotPassword/:email')
+    .get(authController.forgotPassword);
+
+router
+    .route('/resetPassword')
+    .post(authController.resetPassword);
+
+router
     .route('/login')
     .post(authController.login);
 
