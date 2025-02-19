@@ -19,7 +19,7 @@ exports.loginUser = async (email, password) => {
     if (!email || !password) {
         throw new AppError({ statusCode: 400, message: "Credentials required" });
     }
-    
+
     // needs optimisation-->create seperate sp for this later
 
     const user = await User.findOne({ where: { email } });
@@ -36,6 +36,8 @@ exports.loginUser = async (email, password) => {
         throw new AppError({ statusCode: 401, message: "User is not active" });
     }
 
+    //update lastLoginOn in the sp
+    
     const userId = user.userId;
     const isValidPassword = await bcrypt.compare(password, user.password);
     if (!isValidPassword) {

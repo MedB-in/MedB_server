@@ -1,0 +1,56 @@
+CREATE OR REPLACE FUNCTION get_all_subscriptions(
+    page INT, 
+    items_per_page INT, 
+    search_query TEXT DEFAULT NULL
+)
+RETURNS JSON AS $$
+DECLARE
+    result JSON;
+    total_records INT;
+    total_pages INT;
+BEGIN
+    -- Get total count of records matching search criteria
+    SELECT COUNT(*) 
+    INTO total_records 
+    FROM "UserSubscription" s
+    LEFT JOIN "Users" u ON s."userId" = u."userId"
+    LEFT JOIN "Products" p ON s."productId" = p."productId"
+    WHERE search_query IS NULL 
+       OR LOWER(CONCAT_WS(' ', u."firstName", u."middleName", u."lastName", p."productName")) 
+       LIKE LOWER('%' || search_query || '%');
+
+    -- Calculate total pages
+    total_pages := CEIL(total_records::NUMERIC / items_per_page);
+
+    -- Fetch subscription records with search and pagination
+    SELECT json_build_object(
+        'subscriptions', COALESCE(json_agg(row_to_json(t)), '[]'::JSON),
+        'totalRecords', total_records,
+        'totalPages', total_pages,
+        'currentPage', page,
+        'itemsPerPage', items_per_page
+    )
+    INTO result
+    FROM (
+        SELECT 
+            s."userId",
+            CONCAT_WS(' ', u."firstName", u."middleName", u."lastName") AS "userName",
+            s."productId",
+            p."productName",
+            s."startOn" AS "startDate",
+            s."endOn" AS "expiryDate",
+            s."isPaid",
+            s."netAmount"
+        FROM "UserSubscription" s
+        LEFT JOIN "Users" u ON s."userId" = u."userId"
+        LEFT JOIN "Products" p ON s."productId" = p."productId"
+        WHERE search_query IS NULL 
+           OR LOWER(CONCAT_WS(' ', u."firstName", u."middleName", u."lastName", p."productName")) 
+           LIKE LOWER('%' || search_query || '%')
+        ORDER BY s."createdOn" DESC
+        LIMIT items_per_page OFFSET (page - 1) * items_per_page
+    ) t;
+
+    RETURN result;
+END;
+$$ LANGUAGE plpgsql;
