@@ -42,19 +42,27 @@ const User = sequelize.define('User', {
         type: DataTypes.STRING,
         allowNull: true,
     },
-    address1: {
+    address: {
         type: DataTypes.STRING,
         allowNull: true,
     },
-    address2: {
+    city: {
         type: DataTypes.STRING,
         allowNull: true,
     },
-    nationality: {
+    district: {
         type: DataTypes.STRING,
         allowNull: true,
     },
-    pin: {
+    state: {
+        type: DataTypes.STRING,
+        allowNull: true,
+    },
+    country: {
+        type: DataTypes.STRING,
+        allowNull: true,
+    },
+    postalCode: {
         type: DataTypes.STRING,
         allowNull: true,
     },

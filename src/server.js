@@ -23,6 +23,7 @@ const controlPanelRoutes = require('./routes/controlPanelRoutes');
 const productRoutes = require('./routes/productRoutes');
 const clinicRoutes = require('./routes/clinicRoutes');
 const doctorRoutes = require('./routes/doctorRoutes');
+const userRoutes = require('./routes/userRoutes');
 const subscriptionRoutes = require('./routes/subscriptionRoutes');
 
 const app = express();
@@ -57,9 +58,10 @@ app.get('/', (_req, res) => {
 // API Endpoints
 // app.use('/test', testOnly)
 app.use('/api/auth', auth);
-app.use(authMiddleware)
+app.use(authMiddleware);
 app.use('/api/controlPanel', controlPanelRoutes);
 app.use('/api/product', productRoutes);
+app.use('/api/user', userRoutes);
 app.use('/api/clinic', clinicRoutes);
 app.use('/api/doctor', doctorRoutes);
 app.use('/api/subscription', subscriptionRoutes);
