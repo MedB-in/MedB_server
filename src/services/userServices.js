@@ -23,6 +23,7 @@ exports.uploadProfilePicture = async (data) => {
         deleteCloudinaryFile(data.profilePicture)
         throw new AppError({ statusCode: 404, message: 'User not found' });
     }
+    if(user.prifilePicture !== null || user.profilePicture)
     deleteCloudinaryFile(user.profilePicture)
     await user.update(data);
     return user.profilePicture;
