@@ -1,6 +1,7 @@
 const User = require('../models/sqlModels/userModel');
 const UserRights = require('../models/sqlModels/userRightsModel');
 const AppError = require('../utils/appError');
+const deleteCloudinaryFile  = require('../utils/deleteCloudinaryFile');
 
 
 //Service Function to update user profile
@@ -14,6 +15,18 @@ exports.updateUserProfile = async (data) => {
     return user;
 }
 
+//Service Function to upload profile picture
+exports.uploadProfilePicture = async (data) => {
+    const { userId } = data;
+    const user = await User.findOne({ where: { userId } });
+    if (!user) {
+        deleteCloudinaryFile(data.profilePicture)
+        throw new AppError({ statusCode: 404, message: 'User not found' });
+    }
+    deleteCloudinaryFile(user.profilePicture)
+    await user.update(data);
+    return user.profilePicture;
+}
 
 // // Service to add user rights
 // exports.addUserRights = async (data) => {
