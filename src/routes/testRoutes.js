@@ -3,6 +3,7 @@ const testController = require('../controller/testController');
 // const authController = require('../controller/authController');
 const clinicController = require('../controller/clinicController');
 const doctorController = require('../controller/doctorController');
+const patientController = require('../controller/patientController');
 const router = Router();
 
 // POST route for error testing
@@ -12,8 +13,10 @@ router.get('/error', (req, res, next) => {
     next(error);
 });
 
-router.post('/register', testController.register);
-router.get('/login', testController.login);
+// router.post('/addAppointment', patientController.getPatientAppointments);
+
+// router.post('/register', testController.register);
+// router.get('/login', testController.login);
 // router.get('/login', authController.login);
 
 //test routes for user rights
