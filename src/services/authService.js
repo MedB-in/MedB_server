@@ -170,11 +170,6 @@ exports.forgotPassword = async (email) => {
         email: user.email,
         code,
     });
-    const firstName = user.firstName;
-    const middleName = user.middleName;
-    const lastName = user.lastName;
-    await sendVerificationEmail(firstName, middleName, lastName, user.userId, email, user.loginKey);
-
     try {
         await sendPasswordResetEmail(user.email, code);
     } catch (error) {
@@ -182,7 +177,7 @@ exports.forgotPassword = async (email) => {
         throw new AppError({ statusCode: 500, message: "Failed to send email. Please try again later." });
     }
 
-    return { message: "Verification code sent to email." };
+    return { message: "Password reset code sent to email." };
 };
 
 
