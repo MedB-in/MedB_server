@@ -1,12 +1,15 @@
 const { Router } = require('express');
 const userController = require('../controller/userController');
+const uploadMiddleware = require('../middleware/uploadMiddleware');
 const router = Router();
 
 router
     .route('/updateProfile')
     .put(userController.updateProfile);
 
-
+router
+    .route('/uploadProfilePicture')
+    .post(uploadMiddleware, userController.uploadProfilePicture);
 
 
 

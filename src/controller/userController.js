@@ -1,22 +1,37 @@
 const catchAsync = require('../utils/catchAsync');
 const userService = require('../services/userServices');
+const uploadMiddleware = require('../middleware/uploadMiddleware');
 
 
 //Controller to update user profile
 exports.updateProfile = catchAsync(async (req, res, next) => {
-    const { userId } = req.user;
-    const data = { ...JSON.parse(req.body.formData),userId, modifiedBy: userId }
-console.log(data);
 
-    const user = await userService.updateUserProfile(data);
+    const { userId } = req.user;
+    const data = { ...req.body, userId, modifiedBy: userId }
+
+    await userService.updateUserProfile(data);
 
     return res.status(200).json({
         status: 'success',
         message: 'User profile updated successfully',
-        // data: user,
     });
 });
 
+//Controller to upload profile picture
+exports.uploadProfilePicture = catchAsync(async (req, res, next) => {
+
+    const { userId } = req.user;
+    const profilePicture = req.fileUrl
+    const data = { profilePicture, userId, modifiedBy: userId, modifiedOn: new Date() }
+
+    const user = await userService.uploadProfilePicture(data);
+
+    return res.status(200).json({
+        status: 'success',
+        message: 'Profile picture updated',
+        data: user,
+    });
+});
 
 // // Controller to add user rights
 // exports.addUserRights = catchAsync(async (req, res, next) => {
