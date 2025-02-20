@@ -1,0 +1,73 @@
+CREATE OR REPLACE FUNCTION get_patient_appointments(
+    p_user_id BIGINT,
+    p_page INT,
+    p_limit INT,
+    p_search TEXT DEFAULT NULL
+) RETURNS JSON AS $$
+DECLARE
+    result JSON;
+    total_records INT;
+    total_pages INT;
+BEGIN
+    -- Count total records for pagination
+    SELECT COUNT(*) INTO total_records
+    FROM "Appointments" a
+    JOIN "Doctors" d ON a."doctorId" = d."doctorId"
+    LEFT JOIN "Clinics" c ON a."clinicId" = c."clinicId"
+    WHERE a."patientId" = p_user_id
+    AND (
+        p_search IS NULL 
+        OR d."firstName" ILIKE '%' || p_search || '%' 
+        OR d."lastName" ILIKE '%' || p_search || '%'
+        OR d."speciality" ILIKE '%' || p_search || '%'
+        OR TO_CHAR(a."appointmentDate", 'DD-MM-YYYY') ILIKE '%' || p_search || '%'
+        OR c."name" ILIKE '%' || p_search || '%'
+    );
+
+    total_pages := CEIL(total_records::NUMERIC / p_limit);
+
+    -- Fetch paginated appointment details
+    SELECT json_agg(appointments) INTO result
+    FROM (
+        SELECT 
+            a."appointmentId",
+            a."appointmentDate",
+            a."appointmentTime",
+            a."appointmentStatus",
+            a."reasonForVisit",
+            d."doctorId",
+            d."firstName",
+            d."middleName",
+            d."lastName",
+            d."profilePicture",
+            d."experience",
+            d."qualifications",
+            d."gender",
+            d."speciality",
+            c."clinicId",
+            c."name" AS "clinicName",
+            c."clinicPicture"
+        FROM "Appointments" a
+        JOIN "Doctors" d ON a."doctorId" = d."doctorId"
+        LEFT JOIN "Clinics" c ON a."clinicId" = c."clinicId"
+        WHERE a."patientId" = p_user_id
+        AND (
+            p_search IS NULL 
+            OR d."firstName" ILIKE '%' || p_search || '%' 
+            OR d."lastName" ILIKE '%' || p_search || '%'
+            OR d."speciality" ILIKE '%' || p_search || '%'
+            OR TO_CHAR(a."appointmentDate", 'DD-MM-YYYY') ILIKE '%' || p_search || '%'
+            OR c."name" ILIKE '%' || p_search || '%'
+        )
+        ORDER BY a."appointmentDate" DESC, a."appointmentTime" DESC
+        LIMIT p_limit OFFSET (p_page - 1) * p_limit
+    ) AS appointments;
+
+    -- Return paginated result with total pages and current page
+    RETURN json_build_object(
+        'appointments', COALESCE(result, '[]'::JSON),
+        'totalPages', total_pages,
+        'currentPage', p_page
+    );
+END;
+$$ LANGUAGE plpgsql;
