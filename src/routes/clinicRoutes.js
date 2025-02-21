@@ -7,10 +7,14 @@ router
     .route('/')
     .get(clinicController.getAllClinics)
     .post(clinicController.addClinic)
-    
+
 router
     .route('/list')
     .get(clinicController.getClinicList)
+
+router
+    .route('/active/:page')
+    .get(clinicController.getActiveClinics)
 
 router
     .route('/doctorClinic/:clinicId/:doctorId')

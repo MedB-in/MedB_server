@@ -1,0 +1,66 @@
+CREATE OR REPLACE FUNCTION get_all_active_doctors(
+    clinic_id INT, 
+    page INT, 
+    items_per_page INT, 
+    search_query TEXT DEFAULT NULL
+)
+RETURNS JSON AS $$
+DECLARE
+    result JSON;
+    total_records INT;
+    total_pages INT;
+BEGIN
+    -- Count total active doctors associated with the clinic
+    SELECT COUNT(*) 
+    INTO total_records 
+    FROM "Doctors" d
+    JOIN "DoctorClinic" dc 
+        ON d."doctorId" = dc."doctorId" 
+        AND dc."clinicId" = clinic_id
+    WHERE d."isActive" = TRUE 
+      AND dc."isActive" = TRUE
+      AND (
+          search_query IS NULL 
+          OR LOWER(CONCAT_WS(' ', d."firstName", d."middleName", d."lastName", d."speciality")) 
+          LIKE LOWER('%' || search_query || '%')
+      );
+
+    total_pages := CEIL(total_records::NUMERIC / items_per_page);
+
+    -- Fetch active doctors with pagination
+    SELECT json_build_object(
+        'doctors', COALESCE(json_agg(row_to_json(t)), '[]'::JSON),
+        'totalRecords', total_records,
+        'totalPages', total_pages,
+        'currentPage', page,
+        'itemsPerPage', items_per_page
+    )
+    INTO result
+    FROM (
+        SELECT 
+            d."doctorId",
+            d."firstName",
+            d."middleName",
+            d."lastName",
+            d."speciality",
+			d."qualifications",
+			d."experience",
+            d."profilePicture"
+        FROM "Doctors" d
+        JOIN "DoctorClinic" dc 
+            ON d."doctorId" = dc."doctorId" 
+            AND dc."clinicId" = clinic_id
+        WHERE d."isActive" = TRUE 
+          AND dc."isActive" = TRUE
+          AND (
+              search_query IS NULL 
+              OR LOWER(CONCAT_WS(' ', d."firstName", d."middleName", d."lastName", d."speciality")) 
+              LIKE LOWER('%' || search_query || '%')
+          )
+        ORDER BY d."firstName"
+        LIMIT items_per_page OFFSET (page - 1) * items_per_page
+    ) t;
+
+    RETURN result;
+END;
+$$ LANGUAGE plpgsql;

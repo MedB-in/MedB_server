@@ -3,6 +3,7 @@ const { ValidationError } = require('sequelize');
 const AppError = require('../utils/appError');
 const Doctor = require('../models/sqlModels/doctorsModel');
 const DoctorClinic = require('../models/sqlModels/doctorClinicModel');
+const Appointments = require('../models/sqlModels/appointmentsModel');
 
 // Service to get all doctors with corresponding clinics
 exports.getAllDoctors = async () => {
@@ -34,6 +35,87 @@ exports.getDoctorsList = async () => {
 };
 
 
+//Service to get Active doctors
+exports.getActiveDoctors = async (clinicId, page, searchQuery = '') => {
+    try {
+        const limit = 10;
+
+        const result = await sequelize.query(
+            `SELECT get_all_active_doctors(:clinicId, :page, :limit, :searchQuery)`,
+            {
+                replacements: { clinicId, page, limit, searchQuery },
+                type: sequelize.QueryTypes.SELECT,
+            }
+        );
+
+        if (!result || result.length === 0 || !result[0].get_all_active_doctors) {
+            throw new AppError({ statusCode: 404, message: 'No doctors found' });
+        }
+        const { doctors, totalPages, itemsPerPage, currentPage } = result[0].get_all_active_doctors;
+
+        return { doctors, totalPages, itemsPerPage, currentPage };
+    } catch (error) {
+        throw new AppError({ statusCode: 500, message: 'Error retrieving doctors' });
+    }
+};
+
+exports.getSlots = async (clinicId, doctorId, date, day) => {
+    try {
+        const result = await sequelize.query(
+            `SELECT getDoctorSlot(:clinicId::INTEGER, :doctorId::INTEGER, :date::DATE, :day::INTEGER)`,
+            {
+                replacements: { clinicId, doctorId, date, day },
+                type: sequelize.QueryTypes.SELECT,
+            }
+        );
+
+        if (!result || result.length === 0 || !result[0].getdoctorslot) {
+            throw new AppError({ statusCode: 404, message: 'No slots found' });
+        }
+        return result[0].getdoctorslot;
+    } catch (error) {
+        throw new AppError({ statusCode: 500, message: 'Error retrieving slots' });
+    }
+};
+
+//Service to book a slot
+exports.bookSlot = async (data) => {
+    const { userId, clinicId, doctorId, date, time, createdBy } = data;
+
+    try {
+        // Check if the slot is already booked
+        const existingAppointment = await Appointments.findOne({
+            where: { doctorId, clinicId, appointmentDate: date, appointmentTime: time },
+        });
+
+        if (existingAppointment) {
+            throw new AppError({
+                statusCode: 400,
+                message: "This slot is already booked.",
+            });
+        }
+
+        const appointment = await Appointments.create({
+            patientId: userId,
+            clinicId,
+            doctorId,
+            appointmentDate: date,
+            appointmentTime: time,
+            createdBy,
+            createdOn: new Date(),
+        });
+
+        return { message: "Slot booked successfully", appointment };
+    } catch (error) {
+        if (error.name === "SequelizeUniqueConstraintError") {
+            throw new AppError({
+                statusCode: 400,
+                message: error.errors[0]?.message || "Duplicate value error",
+            });
+        }
+        throw error;
+    }
+};
 
 // Service to add a doctor to clinic from a list
 exports.addDoctorClinic = async (data) => {
@@ -144,7 +226,7 @@ exports.editDoctor = async (doctorId, data) => {
     if (!data.firstName || !data.lastName || !data.registration || !data.email || !data.phone || !data.speciality || !data.experience || !data.gender || !clinicId) {
         throw new AppError({ statusCode: 400, message: "Missing required fields for doctor" });
     }
-    
+
     try {
         const doctor = await Doctor.findByPk(doctorId, { transaction });
         if (!doctor) {

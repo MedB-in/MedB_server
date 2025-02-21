@@ -1,23 +1,35 @@
 const { Router } = require('express');
-const userController = require('../controller/doctorController');
+const doctorController = require('../controller/doctorController');
 const router = Router();
 
 // Routes for doctors
 router
     .route('/')
-    .get(userController.getAllDoctors)
-    .post(userController.addDoctor);
+    .get(doctorController.getAllDoctors)
+    .post(doctorController.addDoctor);
+
+router
+    .route('/active/:clinicId/:page')
+    .get(doctorController.getActiveDoctors);
+
+router
+    .route('/slots/:clinicId/:doctorId/:date/:day')
+    .get(doctorController.getSlots);
+
+router
+    .route('/slots')
+    .post(doctorController.bookSlot);
 
 router
     .route('/list')
-    .get(userController.getDoctorsList);
+    .get(doctorController.getDoctorsList);
 
 router
     .route('/doctorClinic/:clinicId')
-    .post(userController.addDoctorClinic);
+    .post(doctorController.addDoctorClinic);
 
 router
     .route('/:id')
-    .put(userController.editDoctor);
+    .put(doctorController.editDoctor);
 
 module.exports = router;
