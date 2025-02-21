@@ -15,6 +15,13 @@ exports.getClinicList = catchAsync(async (req, res, next) => {
     return res.status(200).json({ clinics });
 });
 
+//Controller to get active Clinics
+exports.getActiveClinics = catchAsync(async (req, res, next) => {
+    const { page } = req.params;
+    const { searchQuery } = req.query;
+    const { clinics, totalPages, itemsPerPage, currentPage } = await clinicServices.getActiveClinicsService(page, searchQuery);
+    return res.status(200).json({ clinics, totalPages, itemsPerPage, currentPage });
+});
 
 //Controller to get a single Clinic details with doctors
 exports.getClinicDetails = catchAsync(async (req, res, next) => {

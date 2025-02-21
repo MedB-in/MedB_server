@@ -27,6 +27,29 @@ exports.getClinicListService = async () => {
     return clinics.map(clinic => clinic.dataValues);
 };
 
+//Service function to get active Clinics
+exports.getActiveClinicsService = async (page, searchQuery = '') => {
+    try {
+        const limit = 10;
+
+        const result = await sequelize.query(
+            `SELECT get_all_active_clinics(:page, :limit, :searchQuery)`,
+            {
+                replacements: { page, limit, searchQuery },
+                type: sequelize.QueryTypes.SELECT,
+            }
+        );
+
+        if (!result || result.length === 0 || !result[0].get_all_active_clinics) {
+            throw new AppError({ statusCode: 404, message: 'No clinics found' });
+        }
+        const { clinics, totalPages, itemsPerPage, currentPage } = result[0].get_all_active_clinics;
+        return { clinics, totalPages, itemsPerPage, currentPage };
+    } catch (error) {
+        throw new AppError({ statusCode: 500, message: 'Error retrieving clinics' });
+    }
+};
+
 //Service function to get a single Doctor details and corresponding Clinic details
 exports.getDoctorWithClinic = async (clinicId, doctorId) => {
 
@@ -47,11 +70,11 @@ exports.getDoctorWithClinic = async (clinicId, doctorId) => {
 //Service fundtion to edit the status of a doctor in a clinic
 exports.editDoctorClinicStatus = async (doctorId, clinicId, isActive) => {
     console.log(doctorId, clinicId, isActive);
-    
+
     try {
         const result = await DoctorClinic.update({ isActive }, { where: { doctorId, clinicId } });
         console.log(result[0]);
-        
+
         if (result[0] === 0) {
             throw new AppError({ statusCode: 404, message: "Doctor not found in clinic" });
         }

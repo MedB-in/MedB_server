@@ -2,6 +2,7 @@ const { DataTypes } = require("sequelize");
 const { sequelize } = require("../../config/postgresConnection");
 const Doctor = require("../sqlModels/doctorsModel");
 const Users = require("../sqlModels/userModel");
+const Clinics = require("../sqlModels/clinicsModel");
 
 const Appointment = sequelize.define('Appointment', {
     appointmentId: {
@@ -43,7 +44,7 @@ const Appointment = sequelize.define('Appointment', {
         allowNull: false,
     },
     appointmentStatus: {
-        type: DataTypes.ENUM("Scheduled", "Completed", "Canceled"),
+        type: DataTypes.ENUM("Scheduled", "Completed", "Cancelled"),
         defaultValue: "Scheduled",
     },
     reasonForVisit: {

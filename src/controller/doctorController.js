@@ -12,7 +12,6 @@ exports.getAllDoctors = catchAsync(async (req, res, next) => {
     });
 });
 
-
 // Controller function to get a list of doctors
 exports.getDoctorsList = catchAsync(async (req, res, next) => {
     const doctors = await doctorService.getDoctorsList();
@@ -22,6 +21,14 @@ exports.getDoctorsList = catchAsync(async (req, res, next) => {
         message: 'Doctors list retrieved successfully',
         data: doctors,
     })
+});
+
+// Controller function to get active doctors
+exports.getActiveDoctors = catchAsync(async (req, res, next) => {
+    const { clinicId, page } = req.params;
+    const { searchQuery } = req.query;
+    const { doctors, totalPages, itemsPerPage, currentPage } = await doctorService.getActiveDoctors(clinicId, page, searchQuery);
+    return res.status(200).json({ doctors, totalPages, itemsPerPage, currentPage });
 });
 
 // Controller function to add a doctor to clinic from a list
@@ -39,6 +46,26 @@ exports.addDoctorClinic = catchAsync(async (req, res, next) => {
     });
 })
 
+//Controller function to get slots for booking
+exports.getSlots = catchAsync(async (req, res, next) => {
+    const { clinicId, doctorId, date, day } = req.params;
+    const slots = await doctorService.getSlots(clinicId, doctorId, date, day);
+    return res.status(200).json({ slots });
+});
+
+// Controller function to book a slot
+exports.bookSlot = catchAsync(async (req, res, next) => {
+    const { userId } = req.user;
+    const { clinicId, doctorId, date, time } = req.body;
+    const data = { userId, clinicId, doctorId, date, time, createdBy: userId };
+    const newSlot = await doctorService.bookSlot(data);
+
+    return res.status(201).json({
+        status: 'success',
+        message: 'Slot booked successfully',
+        data: newSlot,
+    });
+});
 
 // Controller function to add a doctor
 exports.addDoctor = catchAsync(async (req, res, next) => {

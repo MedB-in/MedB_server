@@ -1,0 +1,46 @@
+CREATE OR REPLACE FUNCTION public.getdoctorslot(p_clinicid integer, p_doctorid integer, p_date date, p_day integer)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+AS $function$
+DECLARE
+    startTime TIME;
+    endTime TIME;
+    slotGap INT;
+    currentSlot TIME;
+    isBooked BOOLEAN DEFAULT FALSE;
+    slotList JSONB := '[]'::JSONB;
+BEGIN
+    -- Get the slot timings for the doctor on the given day
+    SELECT "timingFrom", "timingTo", "slotGap"
+    INTO startTime, endTime, slotGap
+    FROM "DoctorSlots"
+    WHERE "doctorId" = p_doctorId AND "clinicId" = p_clinicId AND "day" = p_day
+    LIMIT 1;
+
+    -- Initialize the slot time
+    currentSlot := startTime;
+
+    -- Loop through the time range and create slots
+    WHILE currentSlot < endTime LOOP
+        -- Check if the slot is booked in Appointments
+        SELECT EXISTS (
+            SELECT 1 
+            FROM "Appointments"
+            WHERE "clinicId" = p_clinicId 
+                AND "doctorId" = p_doctorId 
+                AND "appointmentDate" = p_date
+                AND "appointmentTime" = currentSlot
+                AND "appointmentStatus" != 'Cancelled'
+        ) INTO isBooked;
+
+        -- Append to JSON array
+        slotList := slotList || JSONB_BUILD_OBJECT('time', currentSlot, 'booked', isBooked);
+
+        -- Increment time by slot gap (converted to INTERVAL)
+        currentSlot := currentSlot + (slotGap || ' minutes')::INTERVAL;
+    END LOOP;
+
+    -- Return the JSONB array of slots
+    RETURN slotList;
+END;
+$function$

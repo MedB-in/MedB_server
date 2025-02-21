@@ -1,0 +1,54 @@
+CREATE OR REPLACE FUNCTION get_all_active_clinics(
+    page INT, 
+    items_per_page INT, 
+    search_query TEXT DEFAULT NULL
+)
+RETURNS JSON AS $$
+DECLARE
+    result JSON;
+    total_records INT;
+    total_pages INT;
+BEGIN
+    SELECT COUNT(*) 
+    INTO total_records 
+    FROM "Clinics" c
+    WHERE c."isActive" = TRUE
+      AND (
+          search_query IS NULL 
+          OR LOWER(CONCAT_WS(' ', c."name", c."address", c."city", c."state", c."country")) 
+          LIKE LOWER('%' || search_query || '%')
+      );
+
+    total_pages := CEIL(total_records::NUMERIC / items_per_page);
+
+    SELECT json_build_object(
+        'clinics', COALESCE(json_agg(row_to_json(t)), '[]'::JSON),
+        'totalRecords', total_records,
+        'totalPages', total_pages,
+        'currentPage', page,
+        'itemsPerPage', items_per_page
+    )
+    INTO result
+    FROM (
+        SELECT 
+            c."clinicId",
+            c."name",
+            c."address",
+            c."city",
+            c."state",
+            c."country",
+            c."clinicPicture"
+        FROM "Clinics" c
+        WHERE c."isActive" = TRUE
+          AND (
+              search_query IS NULL 
+              OR LOWER(CONCAT_WS(' ', c."name", c."address", c."city", c."state", c."country")) 
+              LIKE LOWER('%' || search_query || '%')
+          )
+        ORDER BY c."createdOn" DESC
+        LIMIT items_per_page OFFSET (page - 1) * items_per_page
+    ) t;
+
+    RETURN result;
+END;
+$$ LANGUAGE plpgsql;
