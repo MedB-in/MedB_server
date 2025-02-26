@@ -1,21 +1,9 @@
 const catchAsync = require("../utils/catchAsync");
+const env = require("../utils/validateEnv");
 const authService = require("../services/authService");
 const ms = require("ms");
 
-const dev = process.env.NODE_ENV === "dev";
-
-// Login Controller
-exports.login = catchAsync(async (req, res, next) => {
-    const { email, password } = req.body;
-    const { accessToken, refreshToken, userDetails, menuData } = await authService.loginUser(email, password);
-    res.cookie("refreshToken", refreshToken, {
-        httpOnly: true,
-        secure: !dev,
-        maxAge: ms(process.env.REFRESH_TOKEN_LIFE),
-        ...(dev ? {} : { sameSite: 'None' })
-    });
-    return res.status(200).json({ accessToken, userDetails, menuData });
-});
+const dev = env.NODE_ENV === "dev";
 
 
 // Register Controller
@@ -29,21 +17,6 @@ exports.register = catchAsync(async (req, res, next) => {
     }
 });
 
-// Forgot Password Controller
-exports.forgotPassword = catchAsync(async (req, res, next) => {
-    const { email } = req.params;
-
-    await authService.forgotPassword(email);
-    return res.status(200).json({ message: "Password reset code sent successfully" });
-});
-
-// Reset Password Controller
-exports.resetPassword = catchAsync(async (req, res, next) => {
-    const { email,code, password, confirmPassword } = req.body;
-    await authService.resetPassword(email, code, password, confirmPassword);
-    return res.status(200).json({ message: "Password reset successfully" });
-});
-
 
 //Verify Email Controller
 exports.verifyEmail = catchAsync(async (req, res, next) => {
@@ -53,11 +26,33 @@ exports.verifyEmail = catchAsync(async (req, res, next) => {
 });
 
 
-// Refresh Access Token Controller
-exports.refreshAccessToken = catchAsync(async (req, res, next) => {
-    const refreshToken = req.cookies.refreshToken;
-    const { accessToken } = await authService.refreshAccessToken(refreshToken);
-    return res.status(200).json({ accessToken });
+// Forgot Password Controller
+exports.forgotPassword = catchAsync(async (req, res, next) => {
+    const { email } = req.params;
+    await authService.forgotPassword(email);
+    return res.status(200).json({ message: "Password reset code sent successfully" });
+});
+
+
+// Reset Password Controller
+exports.resetPassword = catchAsync(async (req, res, next) => {
+    const { email, code, password, confirmPassword } = req.body;
+    await authService.resetPassword(email, code, password, confirmPassword);
+    return res.status(200).json({ message: "Password reset successfully" });
+});
+
+
+// Login Controller
+exports.login = catchAsync(async (req, res, next) => {
+    const { email, password } = req.body;
+    const { accessToken, refreshToken, userDetails, menuData } = await authService.loginUser(email, password);
+    res.cookie("refreshToken", refreshToken, {
+        httpOnly: true,
+        secure: !dev,
+        maxAge: ms(env.REFRESH_TOKEN_LIFE),
+        ...(dev ? {} : { sameSite: 'None' }) // only for production and test
+    });
+    return res.status(200).json({ accessToken, userDetails, menuData });
 });
 
 
@@ -70,4 +65,12 @@ exports.logout = catchAsync(async (req, res, next) => {
         secure: !dev,
     });
     res.sendStatus(200);
+});
+
+
+// Refresh Access Token Controller
+exports.refreshAccessToken = catchAsync(async (req, res, next) => {
+    const refreshToken = req.cookies.refreshToken;
+    const { accessToken } = await authService.refreshAccessToken(refreshToken);
+    return res.status(200).json({ accessToken });
 });

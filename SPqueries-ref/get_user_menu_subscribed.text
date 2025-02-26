@@ -5,31 +5,40 @@ AS $function$
 DECLARE 
     result JSON;
     resolved_product_ids INT[];
-    user_menu_ids INT[];
     subscription_menu_ids INT[];
+    user_menu_ids INT[];
     combined_menu_ids INT[];
 BEGIN
-    -- Check if the user has any active subscriptions
+    -- Get only ACTIVE product subscriptions
     SELECT array_agg(us."productId") INTO resolved_product_ids
     FROM "UserSubscription" us
-    WHERE us."userId" = user_id AND us."endOn" > NOW();
+    JOIN "Products" p ON us."productId" = p."productId"
+    WHERE us."userId" = user_id 
+    AND us."endOn" > NOW()
+    AND p."isActive" = TRUE; -- Ensuring only active products
 
-    -- If no active subscription, return an empty JSON array
-    IF resolved_product_ids IS NULL THEN
+    -- If no active subscription, return empty JSON
+    IF resolved_product_ids IS NULL OR array_length(resolved_product_ids, 1) IS NULL THEN
         RETURN '[]'::JSON;
     END IF;
 
-    -- Get menu IDs from ProductMenu for the active subscriptions
+    -- Get only menu IDs from ACTIVE products & ACTIVE menus
     SELECT array_agg(DISTINCT pm."menuId") INTO subscription_menu_ids
     FROM "ProductMenu" pm
-    WHERE pm."productId" = ANY(resolved_product_ids);
+    JOIN "Products" p ON pm."productId" = p."productId"
+    JOIN "Menu" me ON pm."menuId" = me."menuId"
+    WHERE pm."productId" = ANY(resolved_product_ids)
+    AND p."isActive" = TRUE  -- Check if the product is active
+    AND me."isActive" = TRUE; -- Ensure menu is active
 
-    -- Get menu IDs from UserRights (existing logic)
+    -- Get menu IDs from UserRights
     SELECT array_agg(DISTINCT ur."menuId") INTO user_menu_ids
     FROM "UserRights" ur
-    WHERE ur."userId" = user_id;
+    JOIN "Menu" me ON ur."menuId" = me."menuId"
+    WHERE ur."userId" = user_id
+    AND me."isActive" = TRUE; -- Ensure menu is active
 
-    -- Merge both sets of menu IDs while ensuring distinct values
+    -- Merge menu IDs from both sources
     SELECT array_agg(DISTINCT menu_id) INTO combined_menu_ids
     FROM (
         SELECT unnest(subscription_menu_ids)
@@ -37,7 +46,12 @@ BEGIN
         SELECT unnest(user_menu_ids)
     ) AS distinct_menus(menu_id);
 
-    -- Fetch the module and menu structure based on the combined menu IDs
+    -- If no menu IDs, return empty JSON
+    IF combined_menu_ids IS NULL OR array_length(combined_menu_ids, 1) IS NULL THEN
+        RETURN '[]'::JSON;
+    END IF;
+
+    -- Get Module and Menu Structure
     SELECT json_agg(modules_with_menus) INTO result
     FROM (
         SELECT 
@@ -67,7 +81,8 @@ BEGIN
                         ), '{}'::JSONB) AS rights
                     FROM "Menu" me
                     WHERE me."moduleId" = m."moduleId" 
-                    AND me."menuId" = ANY(combined_menu_ids) -- Filter by combined menu IDs
+                    AND me."menuId" = ANY(combined_menu_ids) -- Only selected menus
+                    AND me."isActive" = TRUE -- Ensure only active menus
                     ORDER BY me."sortOrder"
                 ) AS menus_with_rights
             ) AS menus
@@ -76,6 +91,7 @@ BEGIN
             SELECT DISTINCT me."moduleId"
             FROM "Menu" me
             WHERE me."menuId" = ANY(combined_menu_ids)
+            AND me."isActive" = TRUE -- Ensure only active menus
         )
         ORDER BY m."sortOrder"
     ) AS modules_with_menus;

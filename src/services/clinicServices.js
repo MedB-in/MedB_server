@@ -1,8 +1,12 @@
+const bcrypt = require("bcrypt");
 const { sequelize } = require('../config/postgresConnection');
 const AppError = require("../utils/appError");
 const Clinic = require('../models/sqlModels/clinicsModel');
-const DoctorSlot = require('../models/sqlModels/doctorSlot');
 const DoctorClinic = require('../models/sqlModels/doctorClinicModel');
+const ClinicUser = require('../models/sqlModels/clinicUser');
+const User = require('../models/sqlModels/userModel');
+const UserSubscription = require('../models/sqlModels/subscriptionModel');
+const { sendVerificationEmail } = require('./emailServices');
 
 // Service function to get all Clinics
 exports.getAllClinicsService = async () => {
@@ -69,11 +73,8 @@ exports.getDoctorWithClinic = async (clinicId, doctorId) => {
 
 //Service fundtion to edit the status of a doctor in a clinic
 exports.editDoctorClinicStatus = async (doctorId, clinicId, isActive) => {
-    console.log(doctorId, clinicId, isActive);
-
     try {
         const result = await DoctorClinic.update({ isActive }, { where: { doctorId, clinicId } });
-        console.log(result[0]);
 
         if (result[0] === 0) {
             throw new AppError({ statusCode: 404, message: "Doctor not found in clinic" });
@@ -273,3 +274,112 @@ exports.getClinicWithDoctors = async (clinicId) => {
         throw new AppError({ statusCode: 500, message: "Error fetching clinic data", error });
     }
 };
+
+exports.addClinicUser = async (clinicId, data, createdBy) => {
+    const existingUser = await User.findOne({ where: { email: data.email } });
+    if (existingUser) {
+        throw new AppError({ statusCode: 409, message: "Email already registered" });
+    }
+
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(data.password, salt);
+
+    const transaction = await sequelize.transaction();
+    try {
+        const user = await User.create({
+            firstName: data.firstName,
+            middleName: data.middleName || null,
+            lastName: data.lastName || null,
+            email: data.email,
+            password: hashedPassword,
+            isActive: false,
+            isVerified: false,
+            lastLoginOn: new Date(),
+            createdOn: new Date(),
+            createdBy: createdBy,
+        }, { transaction });
+
+        await UserSubscription.create({
+            userId: user.userId,
+            productId: 4, // clinic
+            startOn: new Date(),
+            endOn: new Date(new Date().setFullYear(new Date().getFullYear() + 1)), // One-year validity for now
+            isPaid: false,
+            createdBy: createdBy,
+            createdOn: new Date(),
+        }, { transaction });
+
+        const clinicUser = await ClinicUser.create({ clinicId, userId: user.userId, createdBy, createdOn: new Date() }, { transaction });
+        try {
+            await sendVerificationEmail(
+                data.firstName,
+                data.middleName,
+                data.lastName,
+                user.userId,
+                data.email,
+                user.loginKey
+            );
+        } catch (error) {
+            await transaction.rollback();
+            console.error("Failed to send verification email:", error);
+        }
+
+        await transaction.commit();
+        const userCLinic = {
+            userId: user.userId,
+            firstName: user.firstName,
+            middleName: user.middleName,
+            lastName: user.lastName,
+            email: user.email,
+            contactNo: user.contactNo,
+            isActive: user.isActive,
+            isVerified: user.isVerified,
+            clinicUserId: clinicUser.clinicUserId
+        }
+        return {
+            statusCode: 201,
+            status: "success",
+            message: "User added to clinic successfully",
+            data: userCLinic
+        };
+
+    } catch (error) {
+        if (transaction) await transaction.rollback();
+        throw new AppError({ statusCode: 500, message: "Failed to create user", error });
+    }
+};
+
+
+//Service Function to get users in a Clinic
+exports.getClinicUsers = async (clinicId) => {
+    const clinicUsers = await ClinicUser.findAll({
+        where: { clinicId },
+        include: [
+            {
+                model: User,
+                as: "user",
+                attributes: ["userId", "firstName", "middleName", "lastName", "email", "contactNo", "isActive", "isVerified"],
+            },
+        ],
+        raw: true,
+    });
+
+    const formattedUsers = clinicUsers.map((record) => ({
+        clinicUserId: record.clinicUserId,
+        clinicId: record.clinicId,
+        createdOn: record.createdOn,
+        modifiedOn: record.modifiedOn,
+        createdBy: record.createdBy,
+        modifiedBy: record.modifiedBy,
+        userId: record["user.userId"],
+        firstName: record["user.firstName"],
+        middleName: record["user.middleName"],
+        lastName: record["user.lastName"],
+        email: record["user.email"],
+        contactNo: record["user.contactNo"],
+        isActive: record["user.isActive"],
+        isVerified: record["user.isVerified"],
+    }));
+    return formattedUsers;
+};
+

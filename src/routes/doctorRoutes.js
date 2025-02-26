@@ -9,7 +9,7 @@ router
     .post(doctorController.addDoctor);
 
 router
-    .route('/active/:clinicId/:page')
+    .route('/list/:clinicId/:page')
     .get(doctorController.getActiveDoctors);
 
 router

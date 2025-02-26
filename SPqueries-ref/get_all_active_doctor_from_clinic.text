@@ -1,17 +1,19 @@
-CREATE OR REPLACE FUNCTION get_all_active_doctors(
-    clinic_id INT, 
-    page INT, 
-    items_per_page INT, 
-    search_query TEXT DEFAULT NULL
-)
-RETURNS JSON AS $$
+CREATE OR REPLACE FUNCTION public.get_all_active_doctors(
+    clinic_id integer, 
+    page integer, 
+    items_per_page integer, 
+    search_query text DEFAULT NULL::text
+) 
+RETURNS json 
+LANGUAGE plpgsql
+AS $function$
 DECLARE
     result JSON;
     total_records INT;
     total_pages INT;
 BEGIN
     -- Count total active doctors associated with the clinic
-    SELECT COUNT(*) 
+    SELECT COUNT(DISTINCT d."doctorId") 
     INTO total_records 
     FROM "Doctors" d
     JOIN "DoctorClinic" dc 
@@ -27,7 +29,7 @@ BEGIN
 
     total_pages := CEIL(total_records::NUMERIC / items_per_page);
 
-    -- Fetch active doctors with pagination
+    -- Fetch unique active doctors with pagination
     SELECT json_build_object(
         'doctors', COALESCE(json_agg(row_to_json(t)), '[]'::JSON),
         'totalRecords', total_records,
@@ -37,14 +39,14 @@ BEGIN
     )
     INTO result
     FROM (
-        SELECT 
+        SELECT DISTINCT ON (d."doctorId")  -- Ensure each doctor appears only once
             d."doctorId",
             d."firstName",
             d."middleName",
             d."lastName",
             d."speciality",
-			d."qualifications",
-			d."experience",
+            d."qualifications",
+            d."experience",
             d."profilePicture"
         FROM "Doctors" d
         JOIN "DoctorClinic" dc 
@@ -57,10 +59,10 @@ BEGIN
               OR LOWER(CONCAT_WS(' ', d."firstName", d."middleName", d."lastName", d."speciality")) 
               LIKE LOWER('%' || search_query || '%')
           )
-        ORDER BY d."firstName"
+        ORDER BY d."doctorId", d."firstName"  -- Ensures consistent selection
         LIMIT items_per_page OFFSET (page - 1) * items_per_page
     ) t;
 
     RETURN result;
 END;
-$$ LANGUAGE plpgsql;
+$function$;

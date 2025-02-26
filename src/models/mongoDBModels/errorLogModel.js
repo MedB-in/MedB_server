@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const env = require('../../utils/validateEnv');
 const ms = require('ms');
 
 const errorLogSchema = new mongoose.Schema(
@@ -7,6 +8,9 @@ const errorLogSchema = new mongoose.Schema(
     level: String,
     stack: String,
     clientIp: String,
+    body: Object,
+    user: Object,
+    statusCode: Number,
     url: String,
     timestamp: {
       type: Date,
@@ -18,7 +22,7 @@ const errorLogSchema = new mongoose.Schema(
   }
 );
 
-const expirationSeconds = ms(process.env.ERROR_LOG_EXPIRATION); 
+const expirationSeconds = ms(env.ERROR_LOG_EXPIRATION); 
 
 errorLogSchema.index({ timestamp: 1 }, { expireAfterSeconds: expirationSeconds });
 
