@@ -20,7 +20,7 @@ class MongoDBTransport extends Transport {
 
   log(info, callback) {
     const logMessage = info;
-    
+
     // Log all errors if the array is empty, otherwise log only specified codes
     if (!loggableStatusCodes.length || (logMessage.statusCode && loggableStatusCodes.includes(logMessage.statusCode))) {
       const log = new Log({
@@ -29,8 +29,10 @@ class MongoDBTransport extends Transport {
         stack: logMessage.stack,
         clientIp: logMessage.clientIp,
         url: logMessage.url,
+        body: logMessage.body || {},
+        user: logMessage.user || {},
         timestamp: logMessage.timestamp,
-        statusCode: logMessage.statusCode || 500, 
+        statusCode: logMessage.statusCode || 500,
       });
 
       log

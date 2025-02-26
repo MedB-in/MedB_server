@@ -11,7 +11,7 @@ exports.getAllSubscriptionsService = async (page, searchQuery = '') => {
         const itemsPerPage = 20;
 
         const result = await sequelize.query(
-            `SELECT get_all_subscriptions(:page, :itemsPerPage, :searchQuery)`, 
+            `SELECT get_all_subscriptions(:page, :itemsPerPage, :searchQuery)`,
             {
                 replacements: { page, itemsPerPage, searchQuery },
                 type: sequelize.QueryTypes.SELECT,

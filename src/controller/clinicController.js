@@ -209,3 +209,33 @@ exports.editClinic = catchAsync(async (req, res, next) => {
         data: result.data,
     });
 });
+
+
+//Controller to add user to a Clinic
+exports.addClinicUser = catchAsync(async (req, res, next) => {
+    const { clinicId } = req.params;
+    const { userId } = req.user;
+    const data = req.body;
+    if (!clinicId || clinicId === undefined) {
+        throw new AppError({ statusCode: 400, message: 'Clinic ID is required' });
+    }
+    if (!data) {
+        throw new AppError({ statusCode: 400, message: "User data not provided" });
+    }
+    if (!data.firstName || !data.email || !data.password) {
+        throw new AppError({ statusCode: 400, message: "Missing required fields for user creation" });
+    }
+    const result = await clinicServices.addClinicUser(clinicId, data, userId);
+    return res.status(result.statusCode).json({
+        status: result.status,
+        message: result.message,
+        data: result.data
+    });
+});
+
+//Controller to get users in a Clinic
+exports.getClinicUsers = catchAsync(async (req, res, next) => {
+    const { clinicId } = req.params;
+    const data = await clinicServices.getClinicUsers(clinicId);
+    return res.status(200).json({ data });
+});

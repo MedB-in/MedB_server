@@ -9,11 +9,16 @@ router
     .post(clinicController.addClinic)
 
 router
+    .route('/:id')
+    .get(clinicController.getClinicDetails)
+    .put(clinicController.editClinic)
+
+router
     .route('/list')
     .get(clinicController.getClinicList)
 
 router
-    .route('/active/:page')
+    .route('/list/:page')
     .get(clinicController.getActiveClinics)
 
 router
@@ -37,8 +42,8 @@ router
     .put(clinicController.editSlots)
 
 router
-    .route('/:id')
-    .get(clinicController.getClinicDetails)
-    .put(clinicController.editClinic)
+    .route('/users/:clinicId')
+    .get(clinicController.getClinicUsers)
+    .post(clinicController.addClinicUser)
 
 module.exports = router;

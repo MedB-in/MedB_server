@@ -8,6 +8,7 @@ exports.getAllProducts = catchAsync(async (req, res, next) => {
     return res.status(200).json({ products });
 });
 
+
 // Controller to add a product
 exports.addProduct = catchAsync(async (req, res, next) => {
     const { userId } = req.user;
@@ -21,6 +22,7 @@ exports.addProduct = catchAsync(async (req, res, next) => {
         data: newProduct,
     });
 });
+
 
 // Controller to edit an existing product
 exports.editProduct = catchAsync(async (req, res, next) => {
@@ -41,7 +43,7 @@ exports.editProduct = catchAsync(async (req, res, next) => {
 //Controller to get menu
 exports.getProductMenu = catchAsync(async (req, res, next) => {
     const productMenu = await productService.getMenuList();
-    
+
     return res.status(200).json({ productMenu });
 });
 
@@ -62,6 +64,7 @@ exports.addProductMenu = catchAsync(async (req, res, next) => {
     });
 });
 
+
 // Controller to edit a menu for a product
 exports.editProductMenu = catchAsync(async (req, res, next) => {
     const { productMenuId, productId, menuId } = req.body;
@@ -78,6 +81,7 @@ exports.editProductMenu = catchAsync(async (req, res, next) => {
     });
 });
 
+
 // Controller to add a menu
 exports.addMenu = catchAsync(async (req, res, next) => {
     const { userId } = req.user;
@@ -91,6 +95,7 @@ exports.addMenu = catchAsync(async (req, res, next) => {
         data: newMenu,
     });
 });
+
 
 // Controller to edit a menu
 exports.editMenu = catchAsync(async (req, res, next) => {

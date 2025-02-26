@@ -19,7 +19,7 @@ const errorLogger = require('./middleware/errorLogger');
 // Routes module
 const auth = require('./routes/authentication');
 const testOnly = require('./routes/testRoutes');
-const controlPanelRoutes = require('./routes/controlPanelRoutes');    
+const controlPanelRoutes = require('./routes/controlPanelRoutes');
 const productRoutes = require('./routes/productRoutes');
 const clinicRoutes = require('./routes/clinicRoutes');
 const doctorRoutes = require('./routes/doctorRoutes');
@@ -72,7 +72,7 @@ app.use('/api/patient', patientRoutes);
 app.use(() => {
     throw new AppError({ statusCode: 404, message: 'Route not found!' });
 });
-app.use(errorLogger)  //Enable or Disable error logging********    
+app.use(errorLogger)  //Enable or Disable error logging********
 app.use(globalErrorHandler);
 
 // Start the server

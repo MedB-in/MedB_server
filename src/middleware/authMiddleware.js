@@ -1,8 +1,8 @@
 const jwt = require('jsonwebtoken');
-const User = require('../models/sqlModels/userModel');
 const catchAsync = require('../utils/catchAsync');
 const AppError = require('../utils/appError');
 const env = require('../utils/validateEnv');
+// const User = require('../models/sqlModels/userModel');
 
 const authMiddleware = catchAsync(async (req, res, next) => {
 
@@ -25,7 +25,8 @@ const authMiddleware = catchAsync(async (req, res, next) => {
 
         const userId = decodedToken.userId == decodedRefreshToken.userId ? decodedRefreshToken.userId : null;
 
-        const user = await User.findOne({ where: { userId } });
+        const user = { userId };
+        // const user = await User.findOne({ where: { userId } }); // removed db call for user
 
         if (!userId) {
             throw new AppError({ name: 'Unauthorized', statusCode: 401, message: 'Invalid token' });
