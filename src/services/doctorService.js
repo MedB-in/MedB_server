@@ -80,7 +80,7 @@ exports.getSlots = async (clinicId, doctorId, date, day) => {
 
 //Service to book a slot
 exports.bookSlot = async (data) => {
-    const { userId, clinicId, doctorId, date, time, createdBy } = data;
+    const { userId, clinicId, doctorId, date, time, reason, createdBy } = data;
 
     try {
         // Check if the slot is already booked
@@ -95,10 +95,22 @@ exports.bookSlot = async (data) => {
             });
         }
 
+        const existingAppointmentByPatient = await Appointments.findOne({
+            where: { doctorId, patientId: userId, clinicId, appointmentDate: date, },
+        });
+
+        if (existingAppointmentByPatient) {
+            throw new AppError({
+                statusCode: 400,
+                message: "Doctor already booked for the sameday.",
+            });
+        }
+
         const appointment = await Appointments.create({
             patientId: userId,
             clinicId,
             doctorId,
+            reasonForVisit: reason,
             appointmentDate: date,
             appointmentTime: time,
             createdBy,

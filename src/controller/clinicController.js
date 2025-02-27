@@ -233,9 +233,41 @@ exports.addClinicUser = catchAsync(async (req, res, next) => {
     });
 });
 
+
 //Controller to get users in a Clinic
 exports.getClinicUsers = catchAsync(async (req, res, next) => {
     const { clinicId } = req.params;
     const data = await clinicServices.getClinicUsers(clinicId);
     return res.status(200).json({ data });
+});
+
+
+//Controler to get appointments for a Clinic
+exports.getClinicAppointments = catchAsync(async (req, res, next) => {
+    const { clinicId, page } = req.params;
+    const { search } = req.query;
+    const appointments = await clinicServices.getClinicAppointments(clinicId, page, search);
+    return res.status(200).json({ appointments });
+});
+
+
+// Controller to get patient list for walk in appointment
+exports.getPatientsList = catchAsync(async (req, res, next) => {
+    const { search } = req.query;
+    const patients = await clinicServices.getPatientList(search);
+    return res.status(200).json({ patients });
+});
+
+
+//Controller to book an appointment appointment from a Clinic
+exports.bookFromClinic = catchAsync(async (req, res, next) => {
+    const data = req.body;
+    const createdBy = req.user.userId;
+
+    const newSlot = await clinicServices.bookAppointment(data, createdBy);
+    return res.status(201).json({
+        status: 'success',
+        message: 'Slot booked successfully',
+        data: newSlot
+    });
 });

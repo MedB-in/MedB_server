@@ -1,9 +1,12 @@
-CREATE OR REPLACE FUNCTION get_patient_appointments(
-    p_user_id BIGINT,
-    p_page INT,
-    p_limit INT,
-    p_search TEXT DEFAULT NULL
-) RETURNS JSON AS $$
+CREATE OR REPLACE FUNCTION public.get_clinic_appointments(
+    p_clinic_id bigint,
+    p_page integer,
+    p_limit integer,
+    p_search text DEFAULT NULL::text
+) 
+RETURNS json 
+LANGUAGE plpgsql 
+AS $function$
 DECLARE
     result JSON;
     total_records INT;
@@ -13,15 +16,20 @@ BEGIN
     SELECT COUNT(*) INTO total_records
     FROM "Appointments" a
     JOIN "Doctors" d ON a."doctorId" = d."doctorId"
-    LEFT JOIN "Clinics" c ON a."clinicId" = c."clinicId"
-    WHERE a."patientId" = p_user_id
+    JOIN "Users" u ON a."patientId" = u."userId"
+    WHERE a."clinicId" = p_clinic_id
     AND (
         p_search IS NULL 
         OR d."firstName" ILIKE '%' || p_search || '%' 
         OR d."lastName" ILIKE '%' || p_search || '%'
         OR d."speciality" ILIKE '%' || p_search || '%'
         OR TO_CHAR(a."appointmentDate", 'DD-MM-YYYY') ILIKE '%' || p_search || '%'
-        OR c."name" ILIKE '%' || p_search || '%'
+        OR TO_CHAR(a."appointmentTime", 'HH24:MI') ILIKE '%' || p_search || '%'
+        OR u."firstName" ILIKE '%' || p_search || '%'
+        OR u."middleName" ILIKE '%' || p_search || '%'
+        OR u."lastName" ILIKE '%' || p_search || '%'
+        OR u."email" ILIKE '%' || p_search || '%'
+        OR u."contactNo" ILIKE '%' || p_search || '%'
     );
 
     total_pages := CEIL(total_records::NUMERIC / p_limit);
@@ -36,28 +44,38 @@ BEGIN
             a."appointmentStatus",
             a."reasonForVisit",
             d."doctorId",
-            d."firstName",
-            d."middleName",
-            d."lastName",
-            d."profilePicture",
+            d."firstName" AS "doctorFirstName",
+            d."middleName" AS "doctorMiddleName",
+            d."lastName" AS "doctorLastName",
+            d."profilePicture" AS "doctorProfilePicture",
             d."experience",
             d."qualifications",
-            d."gender",
+            d."gender" AS "doctorGender",
             d."speciality",
-            c."clinicId",
-            c."name" AS "clinicName",
-            c."clinicPicture"
+            u."userId",
+            u."firstName" AS "patientFirstName",
+            u."middleName" AS "patientMiddleName",
+            u."lastName" AS "patientLastName",
+            u."email" AS "patientEmail",
+            u."contactNo" AS "patientContactNo",
+            u."profilePicture" AS "patientProfilePicture"
         FROM "Appointments" a
         JOIN "Doctors" d ON a."doctorId" = d."doctorId"
-        LEFT JOIN "Clinics" c ON a."clinicId" = c."clinicId"
-        WHERE a."patientId" = p_user_id
+        JOIN "Users" u ON a."patientId" = u."userId"
+        WHERE a."clinicId" = p_clinic_id
         AND (
             p_search IS NULL 
             OR d."firstName" ILIKE '%' || p_search || '%' 
+			OR d."middleName" ILIKE '%' || p_search || '%'
             OR d."lastName" ILIKE '%' || p_search || '%'
             OR d."speciality" ILIKE '%' || p_search || '%'
             OR TO_CHAR(a."appointmentDate", 'DD-MM-YYYY') ILIKE '%' || p_search || '%'
-            OR c."name" ILIKE '%' || p_search || '%'
+            OR TO_CHAR(a."appointmentTime", 'HH24:MI') ILIKE '%' || p_search || '%'
+            OR u."firstName" ILIKE '%' || p_search || '%'
+            OR u."middleName" ILIKE '%' || p_search || '%'
+            OR u."lastName" ILIKE '%' || p_search || '%'
+            OR u."email" ILIKE '%' || p_search || '%'
+            OR u."contactNo" ILIKE '%' || p_search || '%'
         )
         ORDER BY a."appointmentDate" DESC, a."appointmentTime"::TIME DESC
         LIMIT p_limit OFFSET (p_page - 1) * p_limit
@@ -70,4 +88,4 @@ BEGIN
         'currentPage', p_page
     );
 END;
-$$ LANGUAGE plpgsql;
+$function$;

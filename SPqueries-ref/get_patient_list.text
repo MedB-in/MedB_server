@@ -1,0 +1,24 @@
+CREATE OR REPLACE FUNCTION get_patient_list(search_text TEXT)
+RETURNS JSONB AS $$
+DECLARE
+    result JSONB;
+BEGIN
+    SELECT jsonb_agg(jsonb_build_object(
+        'userId', "userId",
+        'firstName', "firstName",
+        'middleName', "middleName",
+        'lastName', "lastName",
+        'email', "email",
+        'contactNo', "contactNo"
+    ))
+    INTO result
+    FROM "Users"
+    WHERE "firstName" ILIKE '%' || search_text || '%'
+       OR "middleName" ILIKE '%' || search_text || '%'
+       OR "lastName" ILIKE '%' || search_text || '%'
+       OR "email" ILIKE '%' || search_text || '%'
+       OR "contactNo" ILIKE '%' || search_text || '%';
+
+    RETURN result;
+END;
+$$ LANGUAGE plpgsql;

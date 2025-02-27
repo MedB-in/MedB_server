@@ -5,6 +5,7 @@ const Clinic = require('../models/sqlModels/clinicsModel');
 const DoctorClinic = require('../models/sqlModels/doctorClinicModel');
 const ClinicUser = require('../models/sqlModels/clinicUser');
 const User = require('../models/sqlModels/userModel');
+const Appointments = require('../models/sqlModels/appointmentsModel');
 const UserSubscription = require('../models/sqlModels/subscriptionModel');
 const { sendVerificationEmail } = require('./emailServices');
 
@@ -275,6 +276,8 @@ exports.getClinicWithDoctors = async (clinicId) => {
     }
 };
 
+
+//Service function to add a user in a Clinic
 exports.addClinicUser = async (clinicId, data, createdBy) => {
     const existingUser = await User.findOne({ where: { email: data.email } });
     if (existingUser) {
@@ -383,3 +386,101 @@ exports.getClinicUsers = async (clinicId) => {
     return formattedUsers;
 };
 
+
+//Service Function to get appointments in a Clinic
+exports.getClinicAppointments = async (clinicId, page, search = '') => {
+    try {
+        const limit = 10;
+        const result = await sequelize.query(
+            `SELECT get_clinic_appointments(:clinicId, :page, :limit, :search) AS appointments`,
+            {
+                replacements: { clinicId, page, limit, search },
+                type: sequelize.QueryTypes.SELECT,
+            }
+        );
+        const appointments = result.length > 0 ? result[0].appointments : [];
+
+        return appointments;
+    } catch (error) {
+        throw new AppError({ message: error.message || "Failed to fetch clinic appointments", statusCode: 500 });
+    }
+}
+
+
+//Service Function to get patient details for walk in appointment
+exports.getPatientList = async (search = '') => {
+    try {
+        const result = await sequelize.query(
+            `SELECT get_patient_list(:search) AS patients`,
+            {
+                replacements: { search },
+                type: sequelize.QueryTypes.SELECT,
+            }
+        );
+        const patients = result.length > 0 ? result[0].patients : [];
+        return patients;
+    } catch (error) {
+        throw new AppError({ message: error.message || "Failed to fetch patient list", statusCode: 500 });
+    }
+}
+
+
+//Service Function to book an appointment from a Clinic
+exports.bookAppointment = async (data, createdBy) => {
+    const {
+        clinicId,
+        patientId,
+        doctorId,
+        date,
+        time,
+        reason,
+    } = data;
+
+    try {
+        // Check if the slot is already booked
+        const existingAppointment = await Appointments.findOne({
+            where: { doctorId, clinicId, appointmentDate: date, appointmentTime: time },
+        });
+
+        if (existingAppointment) {
+            throw new AppError({
+                statusCode: 400,
+                message: "This slot is already booked.",
+            });
+        }
+
+        const existingAppointmentByPatient = await Appointments.findOne({
+            where: { doctorId, patientId, clinicId, appointmentDate: date, },
+        });
+
+        if (existingAppointmentByPatient) {
+            throw new AppError({
+                statusCode: 400,
+                message: "Doctor already booked for the sameday.",
+            });
+        }
+
+        const appointment = await Appointments.create({
+            patientId,
+            clinicId,
+            doctorId,
+            reasonForVisit: reason,
+            appointmentDate: date,
+            appointmentTime: time,
+            createdBy,
+            createdOn: new Date(),
+        });
+
+
+        return { message: "Slot booked successfully", appointment };
+
+    } catch (error) {
+        if (error.name === "SequelizeUniqueConstraintError") {
+            throw new AppError({
+                statusCode: 400,
+                message: error.errors[0]?.message || "Duplicate value error",
+            });
+        }
+        throw error;
+    }
+}
