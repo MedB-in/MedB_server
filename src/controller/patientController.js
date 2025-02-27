@@ -9,3 +9,17 @@ exports.getPatientAppointments = catchAsync(async (req, res, next) => {
     const appointments = await patientServices.getPatientAppointmentsService(userId, page, search);
     return res.status(200).json({ appointments });
 });
+
+
+//Controller to add a patient from clinic
+exports.addPatient = catchAsync(async (req, res, next) => {
+    const createdBy = req.user.userId;
+    const data = req.body;
+    
+    const newPatient = await patientServices.addPatientService(data, createdBy);
+    return res.status(201).json({
+        status: 'success',
+        message: 'Patient added successfully',
+        data: newPatient,
+    });
+});

@@ -85,3 +85,58 @@ exports.sendPasswordResetEmail = async (email, resetCode) => {
         });
     });
 };
+
+
+// Service Function to send email verification link for patients added by the clinic
+exports.sendVerificationEmailFromClinic = async (firstName, middleName, lastName, userId, email, loginKey, clinicName, password) => {
+    const verificationUrl = `${url}/verify-email?token=${loginKey}&userId=${userId}`;
+
+    const mailOptions = {
+        to: email,
+        subject: "MedB - Your Account Created by Clinic",
+        html: `
+           <div style="font-family: Arial, sans-serif; width: 600px; margin: 40px auto; padding: 20px; background-color: #f9f9f9; border: 1px solid #ddd; border-radius: 10px;">
+               <h1 style="color: #333; font-size: 24px; margin-bottom: 20px;">Welcome to MedB!</h1>
+               <p style="color: #666; font-size: 16px; margin-bottom: 20px;">Hi ${firstName} ${middleName ? middleName : ""} ${lastName ? lastName : ""},</p>
+               <p style="color: #666; font-size: 16px; margin-bottom: 20px;">
+                   You have been added to MedB by <strong>${clinicName}</strong>.
+               </p>
+               <p style="color: #666; font-size: 16px; margin-bottom: 20px;">
+                   To access your account, please verify your email by clicking the link below:
+               </p>
+               <p style="text-align: center; margin: 20px 0;">
+                   <a href="${verificationUrl}" style="background-color: #4CAF50; color: #fff; padding: 10px 20px; border: none; border-radius: 5px; text-decoration: none; font-size: 16px;">
+                       Verify Email
+                   </a>
+               </p>
+               <p style="color: #666; font-size: 16px; margin-bottom: 20px;">
+                   Your temporary login password is: <strong>${password}</strong>
+               </p>
+               <p style="color: red; font-size: 16px; font-weight: bold; margin-bottom: 20px;">
+                   For security reasons, please change your password immediately after logging in.
+               </p>
+               <p style="color: #666; font-size: 16px; margin-bottom: 20px;">
+                   If you did not request this, please ignore this email.
+               </p>
+               <p style="color: #666; font-size: 16px; margin-bottom: 20px;">
+                   Stay healthy with MedB!
+               </p>
+               <p style="color: #666; font-size: 16px; margin-bottom: 20px;">
+                   Best regards,<br>The MedB Team
+               </p>
+           </div>
+        `,
+    };
+
+    return new Promise((resolve, reject) => {
+        transporter.sendMail(mailOptions, (error, info) => {
+            if (error) {
+                console.error("Error sending email:", error);
+                reject(new AppError({ statusCode: 500, message: "Error sending email", error }));
+            } else {
+                console.log("Email sent:", info.response);
+                resolve(info.response);
+            }
+        });
+    });
+};

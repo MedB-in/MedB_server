@@ -46,4 +46,16 @@ router
     .get(clinicController.getClinicUsers)
     .post(clinicController.addClinicUser)
 
+router
+    .route('/appointments/:clinicId/:page')
+    .get(clinicController.getClinicAppointments)
+
+router
+    .route('/patient/list')
+    .get(clinicController.getPatientsList)
+
+router
+    .route('/bookFromClinic/slots')
+    .post(clinicController.bookFromClinic)
+
 module.exports = router;

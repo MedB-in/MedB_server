@@ -56,8 +56,8 @@ exports.getSlots = catchAsync(async (req, res, next) => {
 // Controller function to book a slot
 exports.bookSlot = catchAsync(async (req, res, next) => {
     const { userId } = req.user;
-    const { clinicId, doctorId, date, time } = req.body;
-    const data = { userId, clinicId, doctorId, date, time, createdBy: userId };
+    const { clinicId, doctorId, date, time, reason } = req.body;
+    const data = { userId, clinicId, doctorId, date, time, reason, createdBy: userId };
     const newSlot = await doctorService.bookSlot(data);
 
     return res.status(201).json({
