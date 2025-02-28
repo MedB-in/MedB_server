@@ -43,6 +43,11 @@ const Appointment = sequelize.define('Appointment', {
         type: DataTypes.TIME,
         allowNull: false,
     },
+    isEmergency: {
+        type: DataTypes.BOOLEAN,
+        allowNull: false,
+        defaultValue: false,
+    },
     appointmentStatus: {
         type: DataTypes.ENUM("Scheduled", "Completed", "Cancelled"),
         defaultValue: "Scheduled",

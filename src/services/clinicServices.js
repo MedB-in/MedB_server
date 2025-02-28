@@ -295,8 +295,8 @@ exports.addClinicUser = async (clinicId, data, createdBy) => {
             lastName: data.lastName || null,
             email: data.email,
             password: hashedPassword,
-            isActive: false,
-            isVerified: false,
+            isActive: data.isVerified === true ? true : false,
+            isVerified: data.isVerified === true ? true : false,
             lastLoginOn: new Date(),
             createdOn: new Date(),
             createdBy: createdBy,
@@ -313,18 +313,21 @@ exports.addClinicUser = async (clinicId, data, createdBy) => {
         }, { transaction });
 
         const clinicUser = await ClinicUser.create({ clinicId, userId: user.userId, createdBy, createdOn: new Date() }, { transaction });
-        try {
-            await sendVerificationEmail(
-                data.firstName,
-                data.middleName,
-                data.lastName,
-                user.userId,
-                data.email,
-                user.loginKey
-            );
-        } catch (error) {
-            await transaction.rollback();
-            console.error("Failed to send verification email:", error);
+
+        if (data.isVerified === false) {
+            try {
+                await sendVerificationEmail(
+                    data.firstName,
+                    data.middleName,
+                    data.lastName,
+                    user.userId,
+                    data.email,
+                    user.loginKey
+                );
+            } catch (error) {
+                await transaction.rollback();
+                console.error("Failed to send verification email:", error);
+            }
         }
 
         await transaction.commit();
@@ -387,24 +390,40 @@ exports.getClinicUsers = async (clinicId) => {
 };
 
 
-//Service Function to get appointments in a Clinic
-exports.getClinicAppointments = async (clinicId, page, search = '') => {
+//Service function to get appointments in a Clinic
+exports.getClinicAppointments = async (clinicId, page, search = '', doctorId, startDate, endDate) => {
     try {
         const limit = 10;
+        const replacements = {
+            clinicId,
+            page,
+            limit,
+            search,
+            doctorId: doctorId || null,
+            startDate,
+            endDate
+        };
         const result = await sequelize.query(
-            `SELECT get_clinic_appointments(:clinicId, :page, :limit, :search) AS appointments`,
+            `SELECT get_clinic_appointments(:clinicId, :page, :limit, :search, :doctorId, :startDate, :endDate) AS response`,
             {
-                replacements: { clinicId, page, limit, search },
+                replacements,
                 type: sequelize.QueryTypes.SELECT,
             }
         );
-        const appointments = result.length > 0 ? result[0].appointments : [];
 
-        return appointments;
+        const response = result.length > 0 ? result[0].response : null;
+        if (!response) {
+            throw new AppError({ message: "No data returned from function", statusCode: 500 });
+        }
+
+        const { appointments, totalPages, currentPage } = response;
+
+        return { appointments, totalPages, currentPage };
     } catch (error) {
         throw new AppError({ message: error.message || "Failed to fetch clinic appointments", statusCode: 500 });
     }
-}
+};
+
 
 
 //Service Function to get patient details for walk in appointment
@@ -434,6 +453,7 @@ exports.bookAppointment = async (data, createdBy) => {
         date,
         time,
         reason,
+        isEmergency,
     } = data;
 
     try {
@@ -467,6 +487,7 @@ exports.bookAppointment = async (data, createdBy) => {
             reasonForVisit: reason,
             appointmentDate: date,
             appointmentTime: time,
+            isEmergency,
             createdBy,
             createdOn: new Date(),
         });
@@ -484,3 +505,32 @@ exports.bookAppointment = async (data, createdBy) => {
         throw error;
     }
 }
+
+
+//Service function to update status of an appointment
+exports.updateAppointmentStatus = async (appointmentId, status, modifiedBy) => {
+    try {
+        if (!appointmentId || !status) {
+            throw new AppError("Invalid appointmentId or status", 400);
+        }
+
+        const validStatuses = ["Scheduled", "Completed", "Cancelled"];
+        if (!validStatuses.includes(status)) {
+            throw new AppError(`Invalid status value: ${status}`, 400);
+        }
+
+        const result = await Appointments.update(
+            { appointmentStatus: status, modifiedBy, modifiedOn: new Date() },
+            { where: { appointmentId } }
+        );
+
+        if (!result) {
+            throw new AppError("Appointment not found or already updated", 404);
+        }
+
+        return result[0];
+
+    } catch (error) {
+        throw new AppError(error.message || "Failed to update appointment status", error.statusCode || 500);
+    }
+};

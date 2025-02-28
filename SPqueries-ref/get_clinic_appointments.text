@@ -1,10 +1,13 @@
 CREATE OR REPLACE FUNCTION public.get_clinic_appointments(
-    p_clinic_id bigint,
-    p_page integer,
-    p_limit integer,
-    p_search text DEFAULT NULL::text
+    p_clinic_id BIGINT,
+    p_page INTEGER,
+    p_limit INTEGER,
+    p_search TEXT DEFAULT NULL::TEXT,
+    p_doctor_id BIGINT DEFAULT NULL,
+    p_start_date DATE DEFAULT NULL,
+    p_end_date DATE DEFAULT NULL
 ) 
-RETURNS json 
+RETURNS JSON 
 LANGUAGE plpgsql 
 AS $function$
 DECLARE
@@ -12,15 +15,26 @@ DECLARE
     total_records INT;
     total_pages INT;
 BEGIN
-    -- Count total records for pagination
+    -- Count total records after applying filters
     SELECT COUNT(*) INTO total_records
     FROM "Appointments" a
     JOIN "Doctors" d ON a."doctorId" = d."doctorId"
     JOIN "Users" u ON a."patientId" = u."userId"
     WHERE a."clinicId" = p_clinic_id
+    AND (p_doctor_id IS NULL OR a."doctorId" = p_doctor_id) -- Get all appointments if doctorId is given
+    AND (p_start_date IS NULL OR a."appointmentDate" >= p_start_date)
+    AND (p_end_date IS NULL OR a."appointmentDate" <= p_end_date)
+    AND (
+        (p_search IS NOT NULL) -- If searching, show all matches
+        OR (
+            p_doctor_id IS NULL AND p_start_date IS NULL AND p_end_date IS NULL 
+            AND a."appointmentDate" = CURRENT_DATE -- Default to today's appointments if no date/doctor filter
+        )
+    )
     AND (
         p_search IS NULL 
         OR d."firstName" ILIKE '%' || p_search || '%' 
+        OR d."middleName" ILIKE '%' || p_search || '%'
         OR d."lastName" ILIKE '%' || p_search || '%'
         OR d."speciality" ILIKE '%' || p_search || '%'
         OR TO_CHAR(a."appointmentDate", 'DD-MM-YYYY') ILIKE '%' || p_search || '%'
@@ -33,8 +47,8 @@ BEGIN
     );
 
     total_pages := CEIL(total_records::NUMERIC / p_limit);
-
-    -- Fetch paginated appointment details
+    
+    -- Fetch paginated appointments after applying filters
     SELECT json_agg(appointments) INTO result
     FROM (
         SELECT 
@@ -43,6 +57,7 @@ BEGIN
             a."appointmentTime",
             a."appointmentStatus",
             a."reasonForVisit",
+            a."isEmergency",
             d."doctorId",
             d."firstName" AS "doctorFirstName",
             d."middleName" AS "doctorMiddleName",
@@ -63,10 +78,20 @@ BEGIN
         JOIN "Doctors" d ON a."doctorId" = d."doctorId"
         JOIN "Users" u ON a."patientId" = u."userId"
         WHERE a."clinicId" = p_clinic_id
+        AND (p_doctor_id IS NULL OR a."doctorId" = p_doctor_id) -- Get all appointments if doctorId is given
+        AND (p_start_date IS NULL OR a."appointmentDate" >= p_start_date)
+        AND (p_end_date IS NULL OR a."appointmentDate" <= p_end_date)
+        AND (
+            (p_search IS NOT NULL) -- If searching, show all matches
+            OR (
+                p_doctor_id IS NULL AND p_start_date IS NULL AND p_end_date IS NULL 
+                AND a."appointmentDate" = CURRENT_DATE -- Default to today's appointments if no date/doctor filter
+            )
+        )
         AND (
             p_search IS NULL 
             OR d."firstName" ILIKE '%' || p_search || '%' 
-			OR d."middleName" ILIKE '%' || p_search || '%'
+            OR d."middleName" ILIKE '%' || p_search || '%'
             OR d."lastName" ILIKE '%' || p_search || '%'
             OR d."speciality" ILIKE '%' || p_search || '%'
             OR TO_CHAR(a."appointmentDate", 'DD-MM-YYYY') ILIKE '%' || p_search || '%'
@@ -77,11 +102,11 @@ BEGIN
             OR u."email" ILIKE '%' || p_search || '%'
             OR u."contactNo" ILIKE '%' || p_search || '%'
         )
-        ORDER BY a."appointmentDate" DESC, a."appointmentTime"::TIME DESC
+        ORDER BY a."appointmentDate" ASC, a."appointmentTime"::TIME ASC
         LIMIT p_limit OFFSET (p_page - 1) * p_limit
     ) AS appointments;
 
-    -- Return paginated result with total pages and current page
+    -- Return paginated result
     RETURN json_build_object(
         'appointments', COALESCE(result, '[]'::JSON),
         'totalPages', total_pages,

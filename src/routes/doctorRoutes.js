@@ -13,6 +13,10 @@ router
     .get(doctorController.getActiveDoctors);
 
 router
+    .route('/clinicDoctorsList/:clinicId')
+    .get(doctorController.getClinicDoctorsList);
+
+router
     .route('/slots/:clinicId/:doctorId/:date/:day')
     .get(doctorController.getSlots);
 

@@ -245,8 +245,8 @@ exports.getClinicUsers = catchAsync(async (req, res, next) => {
 //Controler to get appointments for a Clinic
 exports.getClinicAppointments = catchAsync(async (req, res, next) => {
     const { clinicId, page } = req.params;
-    const { search } = req.query;
-    const appointments = await clinicServices.getClinicAppointments(clinicId, page, search);
+    const { search, doctorId, startDate, endDate } = req.query;
+    const appointments = await clinicServices.getClinicAppointments(clinicId, page, search, doctorId, startDate, endDate);
     return res.status(200).json({ appointments });
 });
 
@@ -269,5 +269,21 @@ exports.bookFromClinic = catchAsync(async (req, res, next) => {
         status: 'success',
         message: 'Slot booked successfully',
         data: newSlot
+    });
+});
+
+
+//Controller to update the status of an appointment
+exports.updateAppointmentStatus = catchAsync(async (req, res, next) => {
+    const { id } = req.params;
+    const { status } = req.body;
+    const modifiedBy = req.user.userId;
+
+    const result = await clinicServices.updateAppointmentStatus(id, status, modifiedBy);
+
+    return res.status(200).json({
+        status: "success",
+        message: "Appointment status updated successfully",
+        data: result
     });
 });

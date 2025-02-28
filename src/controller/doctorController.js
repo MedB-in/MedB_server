@@ -31,6 +31,13 @@ exports.getActiveDoctors = catchAsync(async (req, res, next) => {
     return res.status(200).json({ doctors, totalPages, itemsPerPage, currentPage });
 });
 
+//COntroller function to get minimal details list of a clinic's doctors
+exports.getClinicDoctorsList = catchAsync(async (req, res, next) => {
+    const { clinicId } = req.params;
+    const doctors = await doctorService.getClinicDoctorsList(clinicId);
+    return res.status(200).json({ doctors });
+}) 
+
 // Controller function to add a doctor to clinic from a list
 exports.addDoctorClinic = catchAsync(async (req, res, next) => {
     const { userId } = req.user;

@@ -9,12 +9,12 @@ router
     .post(clinicController.addClinic)
 
 router
-    .route('/:id')
+    .route('/byId/:id')
     .get(clinicController.getClinicDetails)
     .put(clinicController.editClinic)
 
 router
-    .route('/list')
+    .route('/clinicList')
     .get(clinicController.getClinicList)
 
 router
@@ -57,5 +57,9 @@ router
 router
     .route('/bookFromClinic/slots')
     .post(clinicController.bookFromClinic)
+
+router
+    .route('/appointment/status/:id')
+    .put(clinicController.updateAppointmentStatus)
 
 module.exports = router;

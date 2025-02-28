@@ -59,6 +59,31 @@ exports.getActiveDoctors = async (clinicId, page, searchQuery = '') => {
     }
 };
 
+
+//Service to get minimal details of a clinic's doctor
+exports.getClinicDoctorsList = async (clinicId) => {
+    try {
+        const result = await sequelize.query(
+            `SELECT get_clinic_active_doctors_list(:clinicId) AS data`,
+            {
+                replacements: { clinicId },
+                type: sequelize.QueryTypes.SELECT,
+            }
+        );
+
+        if (!result || result.length === 0 || !result[0].data) {
+            throw new AppError({ statusCode: 404, message: 'No doctors found' });
+        }
+
+        return result[0].data; // Extract the JSON object
+    } catch (error) {
+        throw new AppError({ statusCode: 500, message: 'Error retrieving doctors' });
+    }
+};
+
+
+
+//Service to get slots
 exports.getSlots = async (clinicId, doctorId, date, day) => {
     try {
         const result = await sequelize.query(
@@ -77,6 +102,7 @@ exports.getSlots = async (clinicId, doctorId, date, day) => {
         throw new AppError({ statusCode: 500, message: 'Error retrieving slots' });
     }
 };
+
 
 //Service to book a slot
 exports.bookSlot = async (data) => {
@@ -128,6 +154,7 @@ exports.bookSlot = async (data) => {
         throw error;
     }
 };
+
 
 // Service to add a doctor to clinic from a list
 exports.addDoctorClinic = async (data) => {
